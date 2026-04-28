@@ -1,0 +1,825 @@
+/* ============================================================
+   D-CRYPT WEB3 VAULT — DESIGN FOUNDATION
+   index.css  (replace your current one with this file)
+   ============================================================
+
+   ✏️  HOW TO CHANGE THE LOOK:
+   Everything lives in the :root block below (the "DESIGN TOKENS" section).
+   - Want a different accent color?  Change --clr-accent
+   - Want a lighter background?     Change --clr-bg-base
+   - Want a different font?         Change --font-main
+   That ONE change instantly updates your ENTIRE app.
+   You never need to hunt through every component.
+
+   SECTIONS IN THIS FILE:
+   1. Google Fonts Import
+   2. Tailwind Directives
+   3. Design Tokens  ← The ONE place to change your theme
+   4. Base Reset
+   5. Background & Glow Effects
+   6. Typography Helpers
+   7. Card & Surface Classes
+   8. Button Classes
+   9. Input Classes
+   10. Badge & Tag Classes
+   11. Layout Helpers
+   12. Animations & Keyframes
+   ============================================================ */
+
+
+/* ── 1. GOOGLE FONTS ── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+
+/* ── 2. TAILWIND DIRECTIVES ── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ── 3. DESIGN TOKENS ──────────────────────────────────────
+   🎨 THIS IS WHERE YOU CHANGE YOUR THEME.
+   Every color, font, size, and shadow in the app
+   pulls from these variables.
+   ─────────────────────────────────────────────────────── */
+:root {
+
+  /* --- BACKGROUNDS --- */
+  --clr-bg-base:        #030711;
+  --clr-bg-surface:     #060d1f;
+  --clr-bg-card:        rgba(148, 163, 184, 0.05);
+  --clr-bg-card-hover:  rgba(148, 163, 184, 0.09);
+  --clr-bg-input:       rgba(148, 163, 184, 0.06);
+  --clr-bg-input-focus: rgba(148, 163, 184, 0.11);
+
+  /* --- BORDERS --- */
+  --clr-border:         rgba(148, 163, 184, 0.13);
+  --clr-border-accent:  rgba(129, 140, 248, 0.45);
+  --clr-border-strong:  rgba(129, 140, 248, 0.80);
+  --clr-border-emerald: rgba(52, 211, 153, 0.32);
+  --clr-border-danger:  rgba(248, 113, 113, 0.32);
+
+  /* --- PRIMARY ACCENT: Indigo --- */
+  --clr-accent:         #818cf8;
+  --clr-accent-dim:     rgba(99, 102, 241, 0.14);
+  --clr-accent-glow:    rgba(99, 102, 241, 0.35);
+  --clr-accent-border:  rgba(129, 140, 248, 0.45);
+
+  /* --- CYAN (secondary highlight) --- */
+  --clr-cyan:           #22d3ee;
+  --clr-cyan-dim:       rgba(34, 211, 238, 0.10);
+  --clr-cyan-border:    rgba(34, 211, 238, 0.32);
+
+  /* --- SUPPORTING COLORS --- */
+  --clr-purple:         #c084fc;
+  --clr-purple-dim:     rgba(192, 132, 252, 0.12);
+  --clr-purple-border:  rgba(192, 132, 252, 0.32);
+
+  --clr-emerald:        #34d399;
+  --clr-emerald-dim:    rgba(52, 211, 153, 0.10);
+  --clr-emerald-border: rgba(52, 211, 153, 0.30);
+
+  --clr-amber:          #fbbf24;
+  --clr-amber-dim:      rgba(251, 191, 36, 0.10);
+
+  --clr-red:            #f87171;
+  --clr-red-dim:        rgba(248, 113, 113, 0.10);
+
+  --clr-blue:           #60a5fa;
+  --clr-blue-dim:       rgba(96, 165, 250, 0.10);
+  --clr-blue-border:    rgba(96, 165, 250, 0.30);
+
+  /* --- TEXT --- */
+  --clr-text-primary:   #e2e8f0;
+  --clr-text-secondary: #94a3b8;
+  --clr-text-muted:     #64748b;
+  --clr-text-white:     #f8fafc;
+  --clr-text-accent:    #818cf8;
+  --clr-text-emerald:   #34d399;
+  --clr-text-red:       #f87171;
+  --clr-text-amber:     #fbbf24;
+  --clr-text-cyan:      #22d3ee;
+
+  /* --- FONTS --- */
+  --font-main:  'Poppins', sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+
+  /* --- BORDER RADIUS --- */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-pill: 9999px;
+
+  /* --- SHADOWS --- */
+  --shadow-card:        0 4px 40px rgba(0, 0, 0, 0.65);
+  --shadow-accent:      0 0 32px rgba(99, 102, 241, 0.25);
+  --shadow-accent-btn:  0 6px 28px rgba(99, 102, 241, 0.45);
+  --shadow-emerald-btn: 0 6px 28px rgba(52, 211, 153, 0.32);
+  --shadow-inset:       inset 0 1px 0 rgba(255, 255, 255, 0.07);
+
+  /* --- TRANSITIONS --- */
+  --transition-fast:    all 0.18s ease;
+  --transition-med:     all 0.28s ease;
+  --transition-slow:    all 0.45s ease;
+
+  /* --- SIDEBAR WIDTH --- */
+  --sidebar-width: 240px;
+}
+
+
+/* ── 4. BASE RESET ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--clr-bg-base);
+  color: var(--clr-text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--clr-border);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--clr-border-accent);
+}
+
+/* Text selection highlight */
+::selection {
+  background: var(--clr-accent-dim);
+  color: var(--clr-accent);
+}
+
+
+/* ── 5. BACKGROUNDS & GLOW EFFECTS ── */
+
+/* Main page background - use on your root div */
+.web3-bg {
+  background-color: var(--clr-bg-base);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* The subtle grid lines you see in the hero */
+.web3-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow blobs (top-left cyan, bottom-right purple) */
+.web3-bg::after {
+  content: '';
+  position: fixed;
+  top: -300px;
+  left: -200px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.07) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Extra purple glow (add as a sibling div with class="bg-glow-purple") */
+.bg-glow-purple {
+  position: fixed;
+  bottom: -300px;
+  right: -200px;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.06) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Make sure content sits above background effects */
+.web3-content {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ── 6. TYPOGRAPHY HELPERS ── */
+
+.text-accent    { color: var(--clr-text-accent); }
+.text-emerald   { color: var(--clr-text-emerald); }
+.text-danger    { color: var(--clr-text-red); }
+.text-warn      { color: var(--clr-text-amber); }
+.text-secondary { color: var(--clr-text-secondary); }
+.text-muted     { color: var(--clr-text-muted); }
+.text-white     { color: var(--clr-text-white); }
+
+/* Wallet address / hashes */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Large balance display number */
+.balance-number {
+  font-family: var(--font-mono);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  color: var(--clr-text-white);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+/* Section heading style */
+.section-tag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.section-tag::before {
+  content: '';
+  display: block;
+  height: 1px;
+  width: 32px;
+  background: var(--clr-accent);
+  flex-shrink: 0;
+}
+.section-tag span {
+  font-size: 11px;
+  color: var(--clr-accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+
+/* ── 7. CARD & SURFACE CLASSES ── */
+
+/* Standard glassy card */
+.card {
+  background: var(--clr-bg-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card), var(--shadow-inset);
+  transition: var(--transition-med);
+}
+
+/* Card with top edge glow effect on hover */
+.card-hover {
+  position: relative;
+  overflow: hidden;
+}
+.card-hover::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--clr-accent), transparent);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+.card-hover:hover {
+  background: var(--clr-bg-card-hover);
+  border-color: var(--clr-border-accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card), var(--shadow-accent);
+}
+.card-hover:hover::before {
+  transform: scaleX(1);
+}
+
+/* Accent-bordered card (used for highlighted panels) */
+.card-accent {
+  background: var(--clr-accent-dim);
+  border: 1px solid var(--clr-border-accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-accent);
+}
+
+/* Solid dark surface (sidebar, headers) */
+.surface {
+  background: var(--clr-bg-surface);
+  border: 1px solid var(--clr-border);
+}
+
+/* Stat / metric card */
+.stat-card {
+  background: var(--clr-bg-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  transition: var(--transition-med);
+}
+.stat-card:hover {
+  border-color: var(--clr-border-accent);
+}
+.stat-card .stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--clr-text-muted);
+  margin-bottom: 8px;
+}
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--clr-text-white);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+
+/* ── 8. BUTTON CLASSES ── */
+
+/* Base button reset */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-med);
+  white-space: nowrap;
+  text-decoration: none;
+  padding: 12px 24px;
+  font-size: 14px;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Primary - solid cyan button */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 13px;
+  border: 1px solid rgba(129, 140, 248, 0.5);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #a5b4fc 100%);
+  box-shadow: var(--shadow-accent-btn);
+  transform: translateY(-2px);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* Secondary - outlined button */
+.btn-secondary {
+  background: transparent;
+  color: var(--clr-text-primary);
+  border: 1px solid var(--clr-border);
+}
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Emerald - for success/confirm actions */
+.btn-emerald {
+  background: var(--clr-emerald);
+  color: #030812;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.btn-emerald:hover {
+  background: #34d399;
+  box-shadow: var(--shadow-emerald-btn);
+  transform: translateY(-2px);
+}
+
+/* Ghost - for less important actions */
+.btn-ghost {
+  background: transparent;
+  color: var(--clr-accent);
+  border: 1px solid var(--clr-border-accent);
+  font-size: 13px;
+}
+.btn-ghost:hover {
+  background: var(--clr-accent-dim);
+  border-color: var(--clr-accent);
+  box-shadow: var(--shadow-accent);
+}
+
+/* Danger - for destructive actions */
+.btn-danger {
+  background: transparent;
+  color: var(--clr-text-red);
+  border: 1px solid var(--clr-border-danger);
+}
+.btn-danger:hover {
+  background: var(--clr-red-dim);
+  border-color: var(--clr-red);
+}
+
+/* Full width button */
+.btn-full { width: 100%; }
+
+/* Large button size */
+.btn-lg { padding: 15px 36px; font-size: 15px; border-radius: var(--radius-lg); }
+
+/* Small button size */
+.btn-sm { padding: 7px 16px; font-size: 12px; border-radius: var(--radius-sm); }
+
+
+/* ── 9. INPUT CLASSES ── */
+
+.input {
+  width: 100%;
+  font-family: var(--font-main);
+  font-size: 14px;
+  color: var(--clr-text-primary);
+  background: var(--clr-bg-input);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  outline: none;
+  transition: var(--transition-fast);
+}
+.input::placeholder {
+  color: var(--clr-text-muted);
+}
+.input:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.input:focus {
+  background: var(--clr-bg-input-focus);
+  border-color: var(--clr-border-accent);
+  box-shadow: 0 0 0 3px var(--clr-accent-dim);
+}
+
+/* Mono input (for addresses, hashes) */
+.input-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+/* Input label */
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--clr-text-secondary);
+  margin-bottom: 8px;
+}
+
+/* Input group (label + input together) */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+
+/* ── 10. BADGE & TAG CLASSES ── */
+
+/* Base badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.badge-accent   { background: var(--clr-accent-dim);   color: var(--clr-accent);         border: 1px solid var(--clr-border-accent); }
+.badge-emerald  { background: var(--clr-emerald-dim);  color: var(--clr-text-emerald);   border: 1px solid var(--clr-emerald-border); }
+.badge-amber    { background: var(--clr-amber-dim);    color: var(--clr-text-amber);     border: 1px solid rgba(245,158,11,0.25); }
+.badge-danger   { background: var(--clr-red-dim);      color: var(--clr-text-red);       border: 1px solid var(--clr-border-danger); }
+.badge-purple   { background: var(--clr-purple-dim);   color: var(--clr-purple);         border: 1px solid var(--clr-purple-border); }
+.badge-blue     { background: var(--clr-blue-dim);     color: var(--clr-blue);           border: 1px solid var(--clr-blue-border); }
+
+/* Live indicator badge (with pulsing dot) */
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--clr-text-emerald);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.badge-live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--clr-emerald);
+  animation: dc-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+
+/* ── 11. LAYOUT HELPERS ── */
+
+/* Divider line */
+.divider {
+  height: 1px;
+  background: var(--clr-border);
+  border: none;
+  margin: 24px 0;
+}
+
+/* Nav item (for sidebar links) */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--clr-text-secondary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  border: 1px solid transparent;
+}
+.nav-item:hover {
+  color: var(--clr-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+.nav-item.active {
+  color: var(--clr-accent);
+  background: var(--clr-accent-dim);
+  border-color: var(--clr-border-accent);
+}
+
+/* Transaction row */
+.tx-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--clr-bg-card);
+  border: 1px solid var(--clr-border);
+  transition: var(--transition-fast);
+}
+.tx-row:hover {
+  border-color: var(--clr-border-accent);
+  background: var(--clr-bg-card-hover);
+}
+
+/* Page wrapper (applies padding + max width) */
+.page-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* Grid utilities */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .page-wrapper { padding: 20px; }
+}
+
+
+/* ── 13. MOBILE RESPONSIVE ──────────────────────── */
+
+/* ── Dashboard: sidebar hidden on mobile ── */
+@media (max-width: 768px) {
+
+  /* Sidebar collapses off-screen by default */
+  .dc-sidebar {
+    position: fixed !important;
+    left: -260px !important;
+    top: 0; bottom: 0;
+    z-index: 200;
+    transition: left 0.3s ease !important;
+    box-shadow: 4px 0 40px rgba(0,0,0,0.6);
+  }
+  .dc-sidebar.open {
+    left: 0 !important;
+  }
+
+  /* Sidebar overlay (tap to close) */
+  .dc-sidebar-overlay {
+    display: block !important;
+  }
+
+  /* Overview 2-col grid → single col */
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Landing hero stacks */
+  .landing-hero {
+    flex-direction: column !important;
+    padding: 100px 24px 60px !important;
+    text-align: center;
+    gap: 40px !important;
+  }
+  .landing-hero h1 {
+    font-size: clamp(30px, 8vw, 48px) !important;
+  }
+  .landing-hero > div:last-child {
+    display: none; /* hide vault graphic on small screens */
+  }
+
+  /* Landing sections tighter padding */
+  .web3-content section,
+  section.web3-content {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  /* Stats grid → 2 cols */
+  .web3-content > div[style*="gridTemplateColumns: 'repeat(4, 1fr)'"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Features grid min width smaller */
+  .web3-content div[style*="minmax(280px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* How it works: 3 steps → single col */
+  div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Hide connector line on mobile */
+  div[style*="position: 'absolute', top: 34"] {
+    display: none !important;
+  }
+
+  /* Footer: single col */
+  footer.web3-content {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* History table: horizontal scroll */
+  .dc-history-table {
+    overflow-x: auto;
+  }
+  .dc-history-row {
+    grid-template-columns: 34px 1fr 100px 80px !important;
+    font-size: 11px;
+  }
+
+  /* Nav: hide desktop links, show hamburger */
+  .nav-desktop { display: none !important; }
+  .hamburger-btn { display: flex !important; }
+
+  /* Landing footer bottom bar */
+  div.web3-content[style*="justifyContent: 'space-between'"] {
+    flex-direction: column !important;
+    gap: 12px !important;
+    text-align: center;
+  }
+
+  /* Send page: single column */
+  div[style*="gridTemplateColumns: 'minmax(0, 1fr) 280px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Buttons full width on mobile */
+  .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Claim profile card tighter */
+  .animate-scale-in > div {
+    max-width: 100% !important;
+  }
+}
+
+/* Sidebar overlay element (hidden on desktop) */
+.dc-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 199;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Tablet adjustments (768–1024px) ── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+  }
+}
+
+/* ── Very small phones ── */
+@media (max-width: 400px) {
+  .landing-hero { padding: 90px 16px 40px !important; }
+  .card { border-radius: var(--radius-md) !important; }
+  .btn-lg { padding: 13px 20px !important; font-size: 14px !important; }
+}
+
+
+/* ── 12. ANIMATIONS & KEYFRAMES ── */
+
+@keyframes dc-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+@keyframes dc-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes dc-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes dc-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 229, 255, 0.2); }
+  50%      { box-shadow: 0 0 24px rgba(0, 229, 255, 0.55); }
+}
+
+@keyframes dc-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes dc-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dc-slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dc-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation utility classes */
+.animate-fade-in     { animation: dc-fade-in 0.4s ease forwards; }
+.animate-slide-left  { animation: dc-slide-in-left 0.4s ease forwards; }
+.animate-scale-in    { animation: dc-scale-in 0.3s ease forwards; }
+.animate-float       { animation: dc-float 5s ease-in-out infinite; }
+.animate-spin-slow   { animation: dc-spin 20s linear infinite; }
+.animate-glow        { animation: dc-glow 2.5s ease-in-out infinite; }
+
+/* Staggered children (add to parent to animate children one by one) */
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+
+/* Loading shimmer effect (for skeleton screens) */
+.shimmer {
+  background: linear-gradient(90deg,
+    var(--clr-bg-card) 25%,
+    rgba(255,255,255,0.06) 50%,
+    var(--clr-bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: dc-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
