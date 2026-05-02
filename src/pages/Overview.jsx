@@ -307,7 +307,7 @@ export default function Overview() {
       </div>
 
       {/* ── Balance Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
+      <div className="grid-3" style={{ marginBottom: 20 }}>
 
         {/* INR Vault */}
         <div className="card" style={{
@@ -412,7 +412,7 @@ export default function Overview() {
         <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--clr-text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 14 }}>
           Quick Actions
         </p>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <QuickAction
             icon="⬇️" label="Deposit" sub="via UPI"
             color="var(--clr-emerald)"
@@ -437,10 +437,10 @@ export default function Overview() {
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="overview-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 290px', gap: 20, alignItems: 'start' }}>
+      <div className="dashboard-page-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 290px', gap: 20, alignItems: 'start' }}>
 
-        {/* LEFT — Ledger */}
-        <Ledger transactions={transactions} />
+        {/* LEFT — Ledger (limit 4 in overview; click View All → history) */}
+        <Ledger transactions={transactions} limit={4} />
 
         {/* RIGHT — Side panels */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

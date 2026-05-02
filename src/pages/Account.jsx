@@ -470,7 +470,7 @@ export default function Account() {
       </div>
 
       {/* ── Two column layout: left wider, right fixed ── */}
-      <div style={{
+      <div className="account-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0,1fr) 360px',
         gap: 20, alignItems: 'start',

@@ -2,6 +2,8 @@
    Ledger.jsx — Recent transactions widget
    Used in Overview. Shows last 10 user transactions.
 ══════════════════════════════════════════════════ */
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 function getTxMeta(tx) {
   switch (tx.txn_type) {
@@ -90,8 +92,12 @@ function formatTokenAmount(amount) {
   return n.toFixed(8);
 }
 
-export default function Ledger({ transactions = [] }) {
+export default function Ledger({ transactions = [], limit }) {
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
   const txList = Array.isArray(transactions) ? transactions : [];
+  const displayList = (limit && !isExpanded) ? txList.slice(0, limit) : txList;
+  const hasMore = limit && txList.length > limit;
 
   return (
     <div className="card" style={{ padding: 22 }}>
@@ -117,7 +123,7 @@ export default function Ledger({ transactions = [] }) {
       </div>
 
       {/* Empty state */}
-      {txList.length === 0 ? (
+      {displayList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
           <div style={{
             width: 48, height: 48, borderRadius: '50%',
@@ -134,7 +140,7 @@ export default function Ledger({ transactions = [] }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {txList.map((tx) => {
+          {displayList.map((tx) => {
             const meta = getTxMeta(tx);
             const isAccountCreated = tx.txn_type === 'account_created';
             return (
@@ -159,11 +165,11 @@ export default function Ledger({ transactions = [] }) {
                     {tx.web3_hash && (tx.txn_type === 'crypto_send' || tx.txn_type === 'swap') && (
                       <a href={`https://sepolia.etherscan.io/tx/${tx.web3_hash}`}
                         target="_blank" rel="noreferrer"
-                        style={{ fontSize: 11, color: 'var(--clr-text-muted)', textDecoration: 'none', fontFamily: 'var(--font-mono)', transition: 'var(--transition-fast)' }}
+                        style={{ display: 'block', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11, color: 'var(--clr-text-muted)', textDecoration: 'none', fontFamily: 'var(--font-mono)', transition: 'var(--transition-fast)' }}
                         onMouseEnter={e => e.target.style.color = 'var(--clr-accent)'}
                         onMouseLeave={e => e.target.style.color = 'var(--clr-text-muted)'}
                       >
-                        {tx.web3_hash.slice(0, 14)}… ↗
+                        {tx.web3_hash} ↗
                       </a>
                     )}
 
@@ -195,6 +201,39 @@ export default function Ledger({ transactions = [] }) {
               </div>
             );
           })}
+
+          {/* View All button */}
+          {hasMore && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                marginTop: 4,
+                width: '100%',
+                padding: '11px 0',
+                background: 'transparent',
+                border: '1px solid var(--clr-border)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--clr-accent)',
+                fontSize: 13, fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--clr-accent-dim)';
+                e.currentTarget.style.borderColor = 'var(--clr-border-accent)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = 'var(--clr-border)';
+              }}
+            >
+              {isExpanded ? 'Show Less' : 'View All Transactions'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'var(--transition-fast)' }}>
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -239,6 +239,7 @@ body {
 .font-mono {
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
+  word-break: break-all;
 }
 
 /* Large balance display number */
@@ -284,6 +285,8 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card), var(--shadow-inset);
   transition: var(--transition-med);
+  min-width: 0;
+  word-wrap: break-word;
 }
 
 /* Card with top edge glow effect on hover */
@@ -609,6 +612,11 @@ body {
   padding: 32px;
 }
 
+/* Dashboard main content padding */
+.dashboard-main {
+  padding: 32px;
+}
+
 /* Grid utilities */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -617,6 +625,7 @@ body {
 @media (max-width: 900px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .page-wrapper { padding: 20px; }
+  .dashboard-main { padding: 16px; }
 }
 
 
@@ -693,14 +702,10 @@ body {
     grid-template-columns: 1fr !important;
   }
 
-  /* History table: horizontal scroll */
-  .dc-history-table {
-    overflow-x: auto;
-  }
-  .dc-history-row {
-    grid-template-columns: 34px 1fr 100px 80px !important;
-    font-size: 11px;
-  }
+  /* History / Public Ledger — switch to card layout on mobile */
+  .tx-desktop-row { display: none !important; }     /* hide table row */
+  .tx-table-header { display: none !important; }    /* hide column headers */
+  .tx-mobile-card  { display: flex !important; flex-direction: column; }
 
   /* Nav: hide desktop links, show hamburger */
   .nav-desktop { display: none !important; }
@@ -713,9 +718,12 @@ body {
     text-align: center;
   }
 
-  /* Send page: single column */
-  div[style*="gridTemplateColumns: 'minmax(0, 1fr) 280px'"] {
+  /* Dashboard two-column grids */
+  .dashboard-page-grid, .account-grid {
     grid-template-columns: 1fr !important;
+  }
+  .dashboard-page-grid > *, .account-grid > * {
+    min-width: 0 !important;
   }
 
   /* Buttons full width on mobile */
@@ -728,6 +736,79 @@ body {
   .animate-scale-in > div {
     max-width: 100% !important;
   }
+
+  /* Account page: collapse two-col to single col */
+  .account-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Header: hide verbose items to prevent overflow */
+  .header-network-badge, .header-addr-text, .header-subtitle {
+    display: none !important;
+  }
+
+  /* Balance numbers: scale down on mobile */
+  .grid-3 [style*="fontSize: 32"] {
+    font-size: 24px !important;
+  }
+
+  /* Dashboard main padding */
+  .dashboard-main {
+    padding: 14px !important;
+  }
+
+  /* Landing Page Mobile Fixes */
+  .web3-content {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  .landing-hero {
+    padding-top: 100px !important;
+    padding-bottom: 60px !important;
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 40px !important;
+  }
+  .landing-hero h1 {
+    font-size: 42px !important;
+  }
+  .landing-hero p {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .landing-hero .badge {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .landing-hero .btn-lg {
+    width: 100% !important;
+  }
+  .landing-stats-grid {
+    flex-direction: column !important;
+  }
+  .landing-stats-grid > div[style*="width: 1"] {
+    display: none !important; /* hide vertical dividers */
+  }
+  .landing-steps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+  .landing-steps-connector {
+    display: none !important;
+  }
+  .landing-footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 30px !important;
+  }
+  .landing-trust-section {
+    padding: 32px 24px !important;
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 24px !important;
+  }
+  .card {
+    padding: 18px !important;
+  }
 }
 
 /* Sidebar overlay element (hidden on desktop) */
@@ -738,6 +819,31 @@ body {
   background: rgba(0,0,0,0.6);
   z-index: 199;
   backdrop-filter: blur(4px);
+}
+
+/* Modal & Popup standard classes */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 24px;
+}
+.modal-content {
+  background: var(--clr-bg-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ── Tablet adjustments (768–1024px) ── */
@@ -752,6 +858,19 @@ body {
   .landing-hero { padding: 90px 16px 40px !important; }
   .card { border-radius: var(--radius-md) !important; }
   .btn-lg { padding: 13px 20px !important; font-size: 14px !important; }
+  .dashboard-main { padding: 12px !important; }
+}
+
+/* ── DESKTOP: hamburger hidden on desktop ── */
+@media (min-width: 769px) {
+  .hamburger-btn {
+    display: none !important;
+  }
+  .dc-sidebar {
+    position: relative !important;
+    left: 0 !important;
+    flex-shrink: 0;
+  }
 }
 
 

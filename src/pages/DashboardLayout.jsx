@@ -57,7 +57,7 @@ export default function DashboardLayout() {
         <TopHeader onMenuToggle={() => setSidebarOpen(o => !o)} />
 
         {/* Scrollable page content */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
+        <main className="dashboard-main" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
             <Outlet />
           </div>

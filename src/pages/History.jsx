@@ -312,28 +312,36 @@ function TxDetail({ tx, cfg }) {
 
 /* ══════════════════════════════════════
    Single transaction row (collapsible)
+   — Desktop: grid table | Mobile: card
 ══════════════════════════════════════ */
 function TxRow({ tx, isNew }) {
   const [expanded, setExpanded] = useState(false);
   const cfg = getTxConfig(tx.txn_type, tx.direction);
   const recv = receiverDisplay(tx);
 
+  const amountLabel = cfg.prefix === '⇄'
+    ? (tx.direction === 'buy'
+        ? `${tx.token_amount} ${tx.token_symbol}`
+        : `+₹${Number(tx.amount_inr || 0).toFixed(2)}`)
+    : `${cfg.prefix}₹${Number(tx.amount_inr || 0).toFixed(2)}`;
+
   return (
     <div
-      className={`animate-fade-in`}
+      className="tx-entry animate-fade-in"
       style={{
         borderRadius: 'var(--radius-md)',
-        border: isNew
-          ? '1px solid var(--clr-border-accent)'
-          : '1px solid transparent',
+        border: isNew ? '1px solid var(--clr-border-accent)' : '1px solid transparent',
         background: isNew ? 'var(--clr-accent-dim)' : 'transparent',
         transition: 'var(--transition-med)',
         marginBottom: 2,
         overflow: 'hidden',
       }}
     >
-      {/* Main clickable row */}
+      {/* ═══════════════════════════
+          DESKTOP ROW (hidden on mobile via CSS)
+      ═══════════════════════════ */}
       <div
+        className="tx-desktop-row"
         onClick={() => setExpanded(e => !e)}
         style={{
           display: 'grid',
@@ -344,152 +352,131 @@ function TxRow({ tx, isNew }) {
           borderRadius: expanded ? `var(--radius-md) var(--radius-md) 0 0` : 'var(--radius-md)',
           transition: 'var(--transition-fast)',
         }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = 'var(--clr-bg-card-hover)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = 'transparent';
-        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--clr-bg-card-hover)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
       >
-        {/* Type icon */}
+        {/* Icon */}
         <div style={{
           width: 34, height: 34, borderRadius: '50%',
-          background: cfg.colorDim,
-          border: `1px solid ${cfg.colorBdr}`,
+          background: cfg.colorDim, border: `1px solid ${cfg.colorBdr}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: cfg.color, flexShrink: 0,
-        }}>
-          {cfg.icon}
-        </div>
+        }}>{cfg.icon}</div>
 
-        {/* User + secondary info */}
+        {/* User + secondary */}
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
-              color: 'var(--clr-text-primary)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--clr-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {tx.username ? `@${tx.username}` : '—'}
             </span>
-            {recv && (
-              <>
-                <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>→</span>
-                <span style={{
-                  fontSize: 11, fontWeight: 500,
-                  color: isExternalAddress(tx.receiver_username || tx.receiver_address)
-                    ? 'var(--clr-text-muted)'
-                    : 'var(--clr-text-secondary)',
-                  fontFamily: 'var(--font-mono)',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {recv}
-                </span>
-              </>
-            )}
+            {recv && (<>
+              <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>→</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: isExternalAddress(tx.receiver_username || tx.receiver_address) ? 'var(--clr-text-muted)' : 'var(--clr-text-secondary)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{recv}</span>
+            </>)}
           </div>
-
-          {/* Secondary line: hash or UTR or token info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {tx.txn_type === 'deposit' && tx.utr_number && (
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--clr-blue)',
-                background: 'var(--clr-blue-dim)',
-                border: '1px solid var(--clr-blue-border)',
-                borderRadius: 4, padding: '1px 6px',
-                letterSpacing: 0.5,
-              }}>
-                UTR: {tx.utr_number}
-              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--clr-blue)', background: 'var(--clr-blue-dim)', border: '1px solid var(--clr-blue-border)', borderRadius: 4, padding: '1px 6px' }}>UTR: {tx.utr_number}</span>
             )}
             {tx.web3_hash && (
-              <a
-                href={`https://sepolia.etherscan.io/tx/${tx.web3_hash}`}
-                target="_blank" rel="noreferrer"
-                onClick={e => e.stopPropagation()}
-                style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 10,
-                  color: 'var(--clr-accent)',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={e => e.target.style.textDecoration = 'underline'}
-                onMouseLeave={e => e.target.style.textDecoration = 'none'}
-              >
-                {shorten(tx.web3_hash, 6, 4)} ↗
-              </a>
+              <a href={`https://sepolia.etherscan.io/tx/${tx.web3_hash}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--clr-accent)', textDecoration: 'none' }} onMouseEnter={e => e.target.style.textDecoration = 'underline'} onMouseLeave={e => e.target.style.textDecoration = 'none'}>{shorten(tx.web3_hash, 6, 4)} ↗</a>
             )}
-            {tx.token_amount && !tx.web3_hash && (
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--clr-text-muted)',
-              }}>
-                {fmtTokenAmount(tx.token_amount)} {tx.token_symbol}
-              </span>
-            )}
-            {!tx.utr_number && !tx.web3_hash && !tx.token_amount && (
-              <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>
-                {fmtDateShort(tx.created_at)}
-              </span>
-            )}
+            {tx.token_amount && !tx.web3_hash && (<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--clr-text-muted)' }}>{fmtTokenAmount(tx.token_amount)} {tx.token_symbol}</span>)}
+            {!tx.utr_number && !tx.web3_hash && !tx.token_amount && (<span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>{fmtDateShort(tx.created_at)}</span>)}
           </div>
         </div>
 
-        {/* Type badge */}
+        {/* Badge */}
         <div>
-          <span className={`badge ${cfg.badgeClass}`} style={{ fontSize: 10 }}>
-            {cfg.label}
-          </span>
-          {isNew && (
-            <span className="badge badge-emerald" style={{ fontSize: 9, marginLeft: 4 }}>NEW</span>
-          )}
+          <span className={`badge ${cfg.badgeClass}`} style={{ fontSize: 10 }}>{cfg.label}</span>
+          {isNew && <span className="badge badge-emerald" style={{ fontSize: 9, marginLeft: 4 }}>NEW</span>}
         </div>
 
         {/* Amount */}
         <div style={{ textAlign: 'right' }}>
-          <p style={{
-            fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700,
-            color: cfg.amtColor,
-          }}>
-            {cfg.prefix === '⇄'
-              ? (tx.direction === 'buy'
-                  ? `${tx.token_amount} ${tx.token_symbol}`
-                  : `+₹${Number(tx.amount_inr || 0).toFixed(2)}`)
-              : `${cfg.prefix}₹${Number(tx.amount_inr || 0).toFixed(2)}`}
-          </p>
-          {tx.token_amount && tx.txn_type !== 'swap' && (
-            <p style={{
-              fontFamily: 'var(--font-mono)', fontSize: 10,
-              color: 'var(--clr-text-muted)', marginTop: 2,
-            }}>
-              {fmtTokenAmount(tx.token_amount)} {tx.token_symbol}
-            </p>
-          )}
-          {tx.txn_type === 'account_created' && (
-            <p style={{ fontSize: 11, color: 'var(--clr-text-emerald)', fontWeight: 600 }}>Vault Opened</p>
-          )}
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: cfg.amtColor }}>{amountLabel}</p>
+          {tx.token_amount && tx.txn_type !== 'swap' && (<p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--clr-text-muted)', marginTop: 2 }}>{fmtTokenAmount(tx.token_amount)} {tx.token_symbol}</p>)}
+          {tx.txn_type === 'account_created' && (<p style={{ fontSize: 11, color: 'var(--clr-text-emerald)', fontWeight: 600 }}>Vault Opened</p>)}
         </div>
 
-        {/* Date + expand chevron */}
+        {/* Date + chevron */}
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <p style={{ fontSize: 10, color: 'var(--clr-text-muted)', fontFamily: 'var(--font-mono)' }}>
-            {fmtDateShort(tx.created_at)}
-          </p>
-          <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="var(--clr-text-muted)" strokeWidth="2.5"
-            strokeLinecap="round" strokeLinejoin="round"
-            style={{
-              transition: 'transform 0.2s ease',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}
-          >
+          <p style={{ fontSize: 10, color: 'var(--clr-text-muted)', fontFamily: 'var(--font-mono)' }}>{fmtDateShort(tx.created_at)}</p>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--clr-text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </div>
       </div>
 
-      {/* Expanded detail */}
+      {/* ═══════════════════════════
+          MOBILE CARD (hidden on desktop via CSS)
+      ═══════════════════════════ */}
+      <div
+        className="tx-mobile-card"
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          display: 'none', /* CSS media query shows this on mobile */
+          padding: '12px 14px',
+          cursor: 'pointer',
+          transition: 'var(--transition-fast)',
+          gap: 10,
+        }}
+      >
+        {/* Row 1: Icon + User info + Chevron */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          {/* Icon avatar */}
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            background: cfg.colorDim, border: `1px solid ${cfg.colorBdr}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: cfg.color,
+          }}>{cfg.icon}</div>
+
+          {/* Username + recipient */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--clr-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: recv ? '45%' : '100%' }}>
+                {tx.username ? `@${tx.username}` : '—'}
+              </span>
+              {recv && (
+                <>
+                  <span style={{ fontSize: 11, color: 'var(--clr-text-muted)', flexShrink: 0 }}>→</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--clr-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{recv}</span>
+                </>
+              )}
+            </div>
+            {/* Sub-line: hash or UTR */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              {tx.txn_type === 'deposit' && tx.utr_number && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--clr-blue)', background: 'var(--clr-blue-dim)', border: '1px solid var(--clr-blue-border)', borderRadius: 4, padding: '1px 5px' }}>UTR: {tx.utr_number}</span>
+              )}
+              {tx.web3_hash && (
+                <a href={`https://sepolia.etherscan.io/tx/${tx.web3_hash}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--clr-accent)', textDecoration: 'none' }}>{shorten(tx.web3_hash, 5, 4)} ↗</a>
+              )}
+            </div>
+          </div>
+
+          {/* Chevron */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--clr-text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+
+        {/* Row 2: Badge + Amount + Date */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className={`badge ${cfg.badgeClass}`} style={{ fontSize: 9 }}>{cfg.label}</span>
+            {isNew && <span className="badge badge-emerald" style={{ fontSize: 9 }}>NEW</span>}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: cfg.amtColor }}>{amountLabel}</p>
+            {tx.txn_type === 'account_created' && <p style={{ fontSize: 10, color: 'var(--clr-text-emerald)', fontWeight: 600 }}>Vault Opened</p>}
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--clr-text-muted)', marginTop: 2 }}>{fmtDateShort(tx.created_at)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded detail (both desktop + mobile) */}
       {expanded && (
         <div style={{ padding: '0 14px 12px' }}>
           <TxDetail tx={tx} cfg={cfg} />
@@ -777,8 +764,8 @@ export default function History() {
       {/* ── Transaction table ── */}
       <div className="card" style={{ overflow: 'hidden' }}>
 
-        {/* Column headers (hidden on mobile) */}
-        <div style={{
+        {/* Column headers (hidden on mobile via .tx-table-header) */}
+        <div className="tx-table-header" style={{
           display: 'grid',
           gridTemplateColumns: '36px 1fr 160px 130px 90px',
           gap: 12, padding: '10px 14px',

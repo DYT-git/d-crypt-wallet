@@ -144,7 +144,7 @@ export default function PublicLedger() {
         flexWrap: 'wrap', gap: 12,
       }}>
         <p style={{ fontSize: 12, color: 'var(--clr-text-muted)' }}>
-          © 2025 <span style={{ color: 'var(--clr-accent)' }}>D-CRYPT</span> Protocol — All transactions are publicly verifiable on Sepolia.
+          © 2026 <span style={{ color: 'var(--clr-accent)' }}>D-CRYPT</span> Protocol — All transactions are publicly verifiable on Sepolia.
         </p>
         <a href="mailto:humandyt@gmail.com" style={{ fontSize: 12, color: 'var(--clr-text-muted)', textDecoration: 'none' }}
           onMouseEnter={e => e.target.style.color = 'var(--clr-accent)'}

@@ -118,7 +118,7 @@ export default function Sidebar({ onNavigate }) {
           }}>
             {Icons.Lock}
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, letterSpacing: 4, color: 'var(--clr-text-white)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, letterSpacing: 4, color: 'var(--clr-text-white)', whiteSpace: 'nowrap' }}>
             D-<span style={{ color: 'var(--clr-accent)' }}>CRYPT</span>
           </span>
         </div>

@@ -27,26 +27,12 @@ export default function DepositModal({
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(3, 8, 18, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 300, padding: 24,
-      }}
+      className="modal-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget && upiStatus === 'idle') onClose();
       }}
     >
-      <div className="animate-scale-in" style={{
-        background: 'var(--clr-bg-surface)',
-        border: '1px solid var(--clr-border)',
-        borderRadius: 'var(--radius-xl)',
-        width: '100%', maxWidth: 420,
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      <div className="modal-content animate-scale-in">
         {/* Top glow strip */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 1,

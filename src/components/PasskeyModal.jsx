@@ -142,7 +142,7 @@ export default function PasskeyModal({
               rp: { name: "D-CRYPT Secure", id: window.location.hostname },
               user: { id: challenge, name: "D-CRYPT User", displayName: "D-CRYPT Vault" },
               pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-              authenticatorSelection: { userVerification: "required" },
+              authenticatorSelection: { userVerification: "required", authenticatorAttachment: "platform" },
               timeout: 60000
             }
           });
@@ -169,25 +169,20 @@ export default function PasskeyModal({
   return (
     /* Backdrop */
     <div
+      className="modal-overlay"
       onClick={e => { if (e.target === e.currentTarget && !isBusy && !isSuccess) onClose(); }}
       style={{
-        position: 'fixed', inset: 0,
-        background: isProcessing ? 'rgba(3,8,18,0.4)' : 'rgba(3,8,18,0.92)',
-        backdropFilter: isProcessing ? 'blur(4px)' : 'blur(18px)',
-        WebkitBackdropFilter: isProcessing ? 'blur(4px)' : 'blur(18px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 500, padding: 20,
+        background: isProcessing ? 'rgba(3,8,18,0.4)' : undefined,
+        backdropFilter: isProcessing ? 'blur(4px)' : undefined,
+        WebkitBackdropFilter: isProcessing ? 'blur(4px)' : undefined,
         transition: 'background 0.3s, backdrop-filter 0.3s',
       }}
     >
       {/* Panel */}
       <div
+        className="modal-content"
         style={{
-          width: '100%', maxWidth: 420,
-          background: 'var(--clr-bg-surface)',
           border: `1px solid ${isError ? 'var(--clr-border-danger)' : isSuccess ? 'var(--clr-emerald-border)' : 'var(--clr-border)'}`,
-          borderRadius: 'var(--radius-xl)',
-          overflow: 'hidden',
           animation: 'pk-pop 0.28s cubic-bezier(.22,1,.36,1) both',
           transition: 'border-color 0.3s',
         }}

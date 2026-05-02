@@ -545,7 +545,7 @@ export default function Swap() {
       </div>
 
       {/* ── Responsive grid ── */}
-      <div style={{
+      <div className="dashboard-page-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) 300px',
         gap: 20, alignItems: 'start',

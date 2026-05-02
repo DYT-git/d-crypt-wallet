@@ -187,7 +187,7 @@ function StatCell({ value, label, prefix = '', suffix = '', color = 'var(--clr-a
 function LiveStatsBar({ liveStats, statsLoaded }) {
   const volumeCr = Math.round(liveStats.volumeInr / 100000);
   return (
-    <div className="web3-content" style={{
+    <div className="web3-content landing-stats-grid" style={{
       borderTop: '1px solid var(--clr-border)',
       borderBottom: '1px solid var(--clr-border)',
       display: 'flex',
@@ -288,7 +288,7 @@ export default function Landing() {
               <circle cx="8" cy="10.5" r="1" fill="var(--clr-accent)"/>
             </svg>
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, letterSpacing: 4, color: 'var(--clr-text-white)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, letterSpacing: 4, color: 'var(--clr-text-white)', whiteSpace: 'nowrap' }}>
             D-<span style={{ color: 'var(--clr-accent)' }}>CRYPT</span>
           </span>
         </div>
@@ -323,44 +323,13 @@ export default function Landing() {
           >
             Sign Up →
           </button>
-          {/* Hamburger (mobile only) */}
-          <button
-            className="hamburger-btn"
-            onClick={() => setMobileMenuOpen(o => !o)}
-            style={{
-              display: 'none',
-              background: 'none', border: '1px solid var(--clr-border)',
-              color: 'var(--clr-text-primary)', borderRadius: 8,
-              padding: '6px 10px', cursor: 'pointer', fontSize: 18,
-            }}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
         </div>
       </nav>
-
-      {/* Mobile dropdown menu */}
-      {mobileMenuOpen && (
-        <div style={{
-          position: 'fixed', top: 70, left: 0, right: 0, zIndex: 99,
-          background: 'rgba(3,8,18,0.97)', backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid var(--clr-border)',
-          padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16,
-        }}>
-          {['Features', 'How It Works', 'Ledger', 'Docs'].map((l) => (
-            <a key={l} href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-              onClick={() => setMobileMenuOpen(false)}
-              style={{ color: 'var(--clr-text-primary)', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              {l}
-            </a>
-          ))}
-        </div>
-      )}
 
       {/* ════════════════════════════════
           HERO
       ════════════════════════════════ */}
-      <section className="web3-content" style={{
+      <section className="web3-content landing-hero" style={{
         minHeight: '100vh',
         display: 'flex', alignItems: 'center',
         padding: '120px 60px 80px',
@@ -525,9 +494,9 @@ export default function Landing() {
           </h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, position: 'relative' }}>
+        <div className="landing-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, position: 'relative' }}>
           {/* Connector line between steps */}
-          <div style={{
+          <div className="landing-steps-connector" style={{
             position: 'absolute', top: 34,
             left: 'calc(16.67%)', right: 'calc(16.67%)',
             height: 1,
@@ -651,7 +620,7 @@ export default function Landing() {
       {/* ════════════════════════════════
           FOOTER
       ════════════════════════════════ */}
-      <footer className="web3-content" style={{
+      <footer className="web3-content landing-footer-grid" style={{
         borderTop: '1px solid var(--clr-border)',
         padding: '60px 60px 40px',
         display: 'grid',
@@ -763,7 +732,7 @@ export default function Landing() {
         flexWrap: 'wrap', gap: 12,
       }}>
         <p style={{ fontSize: 12, color: 'var(--clr-text-muted)' }}>
-          © 2025 <span style={{ color: 'var(--clr-accent)' }}>D-CRYPT</span> Protocol — Built with ❤️ by DYT
+          © 2026 <span style={{ color: 'var(--clr-accent)' }}>D-CRYPT</span> Protocol — Built with ❤️ by DYT
         </p>
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
           {['Privacy Policy', 'Terms', 'Docs'].map((l) => (

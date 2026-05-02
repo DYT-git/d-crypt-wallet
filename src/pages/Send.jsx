@@ -287,7 +287,7 @@ export default function Send() {
       </div>
 
       {/* Two-column layout */}
-      <div style={{
+      <div className="dashboard-page-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) 280px',
         gap: 20, alignItems: 'start',

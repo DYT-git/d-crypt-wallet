@@ -367,6 +367,11 @@ app.post('/api/ask-tutor', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 D-CRYPT Treasury Engine running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 D-CRYPT Treasury Engine running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel Serverless Functions
+export default app;

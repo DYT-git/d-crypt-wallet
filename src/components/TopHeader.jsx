@@ -63,23 +63,30 @@ export default function TopHeader({ onMenuToggle }) {
     }}>
 
       {/* ── Left: hamburger (mobile) + Page title ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
         <button
           className="hamburger-btn"
           onClick={onMenuToggle}
           style={{
-            display: 'none',
             background: 'none', border: '1px solid var(--clr-border)',
             color: 'var(--clr-text-primary)', borderRadius: 8,
             padding: '6px 10px', cursor: 'pointer', fontSize: 18, lineHeight: 1,
+            flexShrink: 0,
           }}
         >☰</button>
 
-        <div>
-          <h1 style={{ fontSize: 17, fontWeight: 700, color: 'var(--clr-text-white)', lineHeight: 1.2, letterSpacing: -0.3 }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ 
+            fontSize: 17, fontWeight: 700, color: 'var(--clr-text-white)', 
+            lineHeight: 1.2, letterSpacing: -0.3,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>
             {meta.title}
           </h1>
-          <p style={{ fontSize: 11, color: 'var(--clr-text-muted)', marginTop: 1, fontWeight: 400 }}>
+          <p className="header-subtitle" style={{ 
+            fontSize: 11, color: 'var(--clr-text-muted)', marginTop: 1, fontWeight: 400,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' 
+          }}>
             {meta.sub}
           </p>
         </div>
@@ -88,8 +95,8 @@ export default function TopHeader({ onMenuToggle }) {
       {/* ── Right ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
 
-        {/* Network badge */}
-        <div style={{
+        {/* Network badge — hidden on mobile via CSS */}
+        <div className="header-network-badge" style={{
           display: 'flex', alignItems: 'center', gap: 7,
           background: 'var(--clr-bg-card)',
           border: '1px solid var(--clr-border)',
@@ -137,13 +144,14 @@ export default function TopHeader({ onMenuToggle }) {
             {username ? username.slice(0, 2).toUpperCase() : '??'}
           </div>
 
-          {/* Username or address */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0 }}>
+          {/* Username or address — hide text on very small screens */}
+          <div className="header-addr-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0 }}>
             {username && (
               <span style={{
                 fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700,
                 color: copied ? 'var(--clr-accent)' : 'var(--clr-text-primary)',
-                lineHeight: 1.2,
+                lineHeight: 1.2, maxWidth: 100, overflow: 'hidden',
+                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 @{username}
               </span>
