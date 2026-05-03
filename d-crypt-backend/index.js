@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { JsonRpcProvider, Wallet, parseEther, parseUnits, formatEther, formatUnits, Contract } from 'ethers';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -304,32 +305,51 @@ app.get('/api/stats', async (req, res) => {
       .from('users')
       .select('*', { count: 'exact', head: true });
 
-    // Total completed transactions
+    // Total completed transactions (all types)
     const { count: txCount } = await supabase
       .from('transactions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'completed');
 
-    // Total INR volume from completed transactions
-    const { data: volumeData } = await supabase
+    // ── Traded Volume: swaps + crypto sends + INR sends (activity volume)
+    const { data: tradedData } = await supabase
       .from('transactions')
       .select('amount_inr')
       .eq('status', 'completed')
+      .in('txn_type', ['swap', 'crypto_send', 'inr_send'])
       .not('amount_inr', 'is', null);
 
-    const totalVolume = (volumeData || []).reduce((acc, tx) => acc + (parseFloat(tx.amount_inr) || 0), 0);
+    const volumeTraded = (tradedData || []).reduce(
+      (acc, tx) => acc + (parseFloat(tx.amount_inr) || 0), 0
+    );
+
+    // ── Deposited Amount: only successful UPI deposits
+    const { data: depositData } = await supabase
+      .from('transactions')
+      .select('amount_inr')
+      .eq('status', 'completed')
+      .eq('txn_type', 'deposit')
+      .not('amount_inr', 'is', null);
+
+    const depositsInr = (depositData || []).reduce(
+      (acc, tx) => acc + (parseFloat(tx.amount_inr) || 0), 0
+    );
 
     res.json({
-      success: true,
-      users: userCount || 0,
-      transactions: txCount || 0,
-      volumeInr: totalVolume,
+      success:      true,
+      users:        userCount   || 0,
+      transactions: txCount     || 0,
+      volumeTraded: volumeTraded,   // swaps + sends
+      depositsInr:  depositsInr,    // UPI deposits only
+      // keep old field for backward-compat
+      volumeInr:    volumeTraded + depositsInr,
     });
   } catch (error) {
     console.error('Stats error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 // ════════════════════════════════════════════════
 // POST /api/ask-tutor — Omni-Chat AI Tutor
@@ -363,6 +383,71 @@ app.post('/api/ask-tutor', async (req, res) => {
   } catch (err) {
     console.error('AI Tutor Error:', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════
+// POST /api/support/notify — Email alert to admin
+// ════════════════════════════════════════════════
+app.post('/api/support/notify', async (req, res) => {
+  try {
+    const { type, ticketId, username, subject, preview, userEmail } = req.body;
+
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      // Silently skip if email not configured — don't crash the app
+      return res.json({ success: true, skipped: true });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    const isNew = type === 'new_ticket';
+    const subject_line = isNew
+      ? `[D-CRYPT Support] New ticket from @${username || 'user'}`
+      : `[D-CRYPT Support] New message in ticket #${ticketId}`;
+
+    const appUrl = process.env.APP_URL || 'https://d-crypt.vercel.app';
+
+    await transporter.sendMail({
+      from: `"D-CRYPT Support" <${process.env.GMAIL_USER}>`,
+      to: 'humandyt@gmail.com',
+      subject: subject_line,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+          <div style="background:#0c0f1a;padding:24px;border-radius:12px 12px 0 0">
+            <h2 style="color:#818cf8;margin:0;font-family:monospace;letter-spacing:2px">D‑CRYPT</h2>
+            <p style="color:#94a3b8;margin:4px 0 0;font-size:12px">Support System</p>
+          </div>
+          <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none">
+            <h3 style="margin:0 0 16px;color:#1e293b">${isNew ? '🍌 New Support Ticket' : '💬 New Reply'}</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+              <tr><td style="padding:6px 0;color:#64748b;width:120px">Ticket #</td><td style="color:#1e293b;font-weight:600">${ticketId}</td></tr>
+              <tr><td style="padding:6px 0;color:#64748b">User</td><td style="color:#4f46e5;font-family:monospace">@${username || '—'}</td></tr>
+              ${userEmail ? `<tr><td style="padding:6px 0;color:#64748b">Email</td><td style="color:#1e293b">${userEmail}</td></tr>` : ''}
+              <tr><td style="padding:6px 0;color:#64748b">Subject</td><td style="color:#1e293b">${subject || '—'}</td></tr>
+            </table>
+            ${preview ? `<div style="margin-top:16px;padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;color:#334155;font-size:14px;line-height:1.6">${preview}</div>` : ''}
+            <div style="margin-top:20px">
+              <a href="${appUrl}/admin/support?ticket=${ticketId}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">View &amp; Reply →</a>
+            </div>
+          </div>
+          <div style="background:#f1f5f9;padding:12px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
+            <p style="margin:0;font-size:11px;color:#94a3b8">D-CRYPT Support System — humandyt@gmail.com</p>
+          </div>
+        </div>
+      `,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Support notify error:', err);
+    // Don’t fail the user’s action if email fails
+    res.json({ success: true, emailError: err.message });
   }
 });
 

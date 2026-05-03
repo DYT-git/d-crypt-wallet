@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /* ═══════════════════════════════════════════════════════════════
    PasskeyModal.jsx — D-CRYPT Custom Biometric Verification Modal
@@ -106,8 +106,6 @@ export default function PasskeyModal({
   rows = [],            // [{ label: string, value: string, highlight?: bool, mono?: bool }]
   icon = null,
 }) {
-  if (!show) return null;
-
   const isIdle       = state === 'idle';
   const isVerifying  = state === 'verifying';
   const isProcessing = state === 'processing';
@@ -116,6 +114,15 @@ export default function PasskeyModal({
   const isBusy       = isVerifying || isProcessing;
 
   const [localError, setLocalError] = useState('');
+
+  /* ── Lock body scroll when open ── */
+  useEffect(() => {
+    if (!show) return;
+    document.body.classList.add('modal-open');
+    return () => document.body.classList.remove('modal-open');
+  }, [show]);
+
+  if (!show) return null;
 
   /* ── Trigger Native OS Biometric (WebAuthn) ── */
   const handleVerifyClick = async () => {
@@ -181,6 +188,7 @@ export default function PasskeyModal({
       {/* Panel */}
       <div
         className="modal-content"
+        onClick={e => e.stopPropagation()}
         style={{
           border: `1px solid ${isError ? 'var(--clr-border-danger)' : isSuccess ? 'var(--clr-emerald-border)' : 'var(--clr-border)'}`,
           animation: 'pk-pop 0.28s cubic-bezier(.22,1,.36,1) both',

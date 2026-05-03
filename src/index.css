@@ -129,12 +129,343 @@
 }
 
 
-/* ── 4. BASE RESET ── */
+/* ── LIGHT MODE TOKENS ──────────────────────────────────────
+   Premium "Ivory Indigo" light theme
+   ─────────────────────────────────────────────────────── */
+[data-theme='light'] {
+  /* --- BACKGROUNDS (warm ivory + subtle lavender tints) --- */
+  --clr-bg-base:        #f6f5ff;          /* faint lavender white */
+  --clr-bg-surface:     #ede9fe;          /* soft violet surface for sidebar/header */
+  --clr-bg-card:        rgba(255, 255, 255, 0.92);
+  --clr-bg-card-hover:  rgba(255, 255, 255, 1.0);
+  --clr-bg-input:       rgba(255, 255, 255, 0.90);
+  --clr-bg-input-focus: rgba(255, 255, 255, 1.0);
+
+  /* --- BORDERS (indigo-tinted, clearly visible) --- */
+  --clr-border:         rgba(99, 102, 241, 0.18);
+  --clr-border-accent:  rgba(79, 70, 229, 0.55);
+  --clr-border-strong:  rgba(79, 70, 229, 0.85);
+  --clr-border-emerald: rgba(5, 150, 105, 0.38);
+  --clr-border-danger:  rgba(220, 38, 38, 0.30);
+
+  /* --- PRIMARY ACCENT: Rich Indigo --- */
+  --clr-accent:         #4338ca;
+  --clr-accent-dim:     rgba(67, 56, 202, 0.10);
+  --clr-accent-glow:    rgba(67, 56, 202, 0.22);
+  --clr-accent-border:  rgba(67, 56, 202, 0.45);
+
+  /* --- CYAN (teal tone in light) --- */
+  --clr-cyan:           #0891b2;
+  --clr-cyan-dim:       rgba(8, 145, 178, 0.09);
+  --clr-cyan-border:    rgba(8, 145, 178, 0.30);
+
+  /* --- SUPPORTING COLORS --- */
+  --clr-purple:         #7c3aed;
+  --clr-purple-dim:     rgba(124, 58, 237, 0.10);
+  --clr-purple-border:  rgba(124, 58, 237, 0.28);
+
+  --clr-emerald:        #059669;
+  --clr-emerald-dim:    rgba(5, 150, 105, 0.10);
+  --clr-emerald-border: rgba(5, 150, 105, 0.28);
+
+  --clr-amber:          #b45309;
+  --clr-amber-dim:      rgba(180, 83, 9, 0.08);
+
+  --clr-red:            #dc2626;
+  --clr-red-dim:        rgba(220, 38, 38, 0.08);
+
+  --clr-blue:           #1d4ed8;
+  --clr-blue-dim:       rgba(29, 78, 216, 0.08);
+  --clr-blue-border:    rgba(29, 78, 216, 0.25);
+
+  /* --- TEXT (high contrast slate tones) --- */
+  --clr-text-primary:   #1e1b4b;          /* deep indigo for main text */
+  --clr-text-secondary: #4338ca;          /* indigo for secondary — gives branded feel */
+  --clr-text-muted:     #9ca3af;
+  --clr-text-white:     #0f0e2e;          /* near-black for headings */
+  --clr-text-accent:    #4338ca;
+  --clr-text-emerald:   #047857;
+  --clr-text-red:       #dc2626;
+  --clr-text-amber:     #b45309;
+  --clr-text-cyan:      #0891b2;
+
+  /* --- SHADOWS (layered, colorful depth) --- */
+  --shadow-card:        0 2px 8px rgba(67,56,202,0.07), 0 8px 32px rgba(67,56,202,0.10), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-accent:      0 0 0 3px rgba(67,56,202,0.12), 0 8px 24px rgba(67,56,202,0.20);
+  --shadow-accent-btn:  0 4px 16px rgba(67,56,202,0.40), 0 1px 4px rgba(67,56,202,0.20);
+  --shadow-emerald-btn: 0 4px 16px rgba(5,150,105,0.35);
+  --shadow-inset:       inset 0 1px 0 rgba(255,255,255,1.0), inset 0 -1px 0 rgba(67,56,202,0.06);
+}
+
+/* ─── Light mode: Page Background ─────────────────────────── */
+[data-theme='light'] .web3-bg {
+  background: linear-gradient(155deg, #f6f5ff 0%, #ede9fe 40%, #e0e7ff 100%);
+}
+
+/* Replace the dotted grid with a softer diamond pattern */
+[data-theme='light'] .web3-bg::before {
+  background-image:
+    linear-gradient(rgba(99,102,241,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Top-left ambient glow: warm violet */
+[data-theme='light'] .web3-bg::after {
+  background: radial-gradient(ellipse at 20% 10%, rgba(139,92,246,0.18) 0%, transparent 55%);
+  width: 900px;
+  height: 900px;
+  top: -250px;
+  left: -250px;
+}
+
+/* Bottom-right: coral-pink secondary glow */
+[data-theme='light'] .bg-glow-purple {
+  background: radial-gradient(ellipse at 80% 90%, rgba(79,70,229,0.14) 0%, rgba(196,181,253,0.08) 40%, transparent 70%);
+  bottom: -300px;
+  right: -200px;
+  width: 900px;
+  height: 900px;
+}
+
+/* ─── Light mode: Cards ────────────────────────────────────── */
+[data-theme='light'] .card {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(99, 102, 241, 0.15);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+}
+[data-theme='light'] .card-hover:hover {
+  background: rgba(255, 255, 255, 1.0);
+  border-color: rgba(67, 56, 202, 0.35);
+  box-shadow:
+    0 4px 20px rgba(67,56,202,0.14),
+    0 1px 3px rgba(0,0,0,0.05),
+    inset 0 1px 0 rgba(255,255,255,1.0);
+  transform: translateY(-4px);
+}
+[data-theme='light'] .card-hover::before {
+  background: linear-gradient(90deg, transparent, rgba(67,56,202,0.35), transparent);
+}
+
+/* Accent card */
+[data-theme='light'] .card-accent {
+  background: linear-gradient(135deg, rgba(237,233,254,0.9) 0%, rgba(224,231,255,0.9) 100%);
+  border-color: rgba(67, 56, 202, 0.30);
+  box-shadow: 0 4px 20px rgba(67,56,202,0.12);
+}
+
+/* Stat card */
+[data-theme='light'] .stat-card {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(99,102,241,0.15);
+  box-shadow: var(--shadow-card);
+}
+[data-theme='light'] .stat-card:hover {
+  border-color: rgba(67,56,202,0.40);
+  box-shadow: 0 6px 28px rgba(67,56,202,0.16);
+}
+
+/* ─── Light mode: Sidebar & Header ────────────────────────── */
+[data-theme='light'] .surface {
+  background: linear-gradient(180deg, rgba(237,233,254,0.98) 0%, rgba(224,231,255,0.96) 100%);
+  border-color: rgba(99,102,241,0.16);
+  box-shadow: 2px 0 20px rgba(67,56,202,0.08);
+}
+
+/* ─── Light mode: Nav items ────────────────────────────────── */
+[data-theme='light'] .nav-item {
+  color: #4338ca;
+}
+[data-theme='light'] .nav-item:hover {
+  background: rgba(67,56,202,0.08);
+  color: #1e1b4b;
+}
+[data-theme='light'] .nav-item.active {
+  background: linear-gradient(135deg, rgba(67,56,202,0.14) 0%, rgba(124,58,237,0.10) 100%);
+  color: #4338ca;
+  border-color: rgba(67,56,202,0.35);
+}
+
+/* ─── Light mode: Inputs ───────────────────────────────────── */
+[data-theme='light'] .input {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(99,102,241,0.20);
+  color: #1e1b4b;
+  box-shadow: inset 0 1px 3px rgba(67,56,202,0.06);
+}
+[data-theme='light'] .input:hover {
+  border-color: rgba(67,56,202,0.35);
+}
+[data-theme='light'] .input:focus {
+  background: #ffffff;
+  border-color: rgba(67,56,202,0.60);
+  box-shadow: 0 0 0 3px rgba(67,56,202,0.12), inset 0 1px 3px rgba(67,56,202,0.06);
+}
+
+/* ─── Light mode: Buttons ──────────────────────────────────── */
+[data-theme='light'] .btn-secondary {
+  background: rgba(255,255,255,0.85);
+  color: #4338ca;
+  border-color: rgba(67,56,202,0.28);
+  box-shadow: 0 1px 4px rgba(67,56,202,0.08);
+}
+[data-theme='light'] .btn-secondary:hover {
+  background: rgba(255,255,255,1.0);
+  border-color: rgba(67,56,202,0.50);
+  box-shadow: 0 4px 16px rgba(67,56,202,0.16);
+  color: #1e1b4b;
+}
+
+[data-theme='light'] .btn-ghost {
+  background: transparent;
+  color: #4338ca;
+  border-color: rgba(67,56,202,0.35);
+}
+[data-theme='light'] .btn-ghost:hover {
+  background: rgba(67,56,202,0.08);
+  border-color: rgba(67,56,202,0.55);
+  box-shadow: 0 4px 16px rgba(67,56,202,0.14);
+}
+
+[data-theme='light'] .btn-danger {
+  background: rgba(254,242,242,0.8);
+  color: #dc2626;
+  border-color: rgba(220,38,38,0.28);
+}
+[data-theme='light'] .btn-danger:hover {
+  background: rgba(254,242,242,1.0);
+  border-color: rgba(220,38,38,0.50);
+}
+
+/* ─── Light mode: Badges ───────────────────────────────────── */
+[data-theme='light'] .badge-accent {
+  background: rgba(67,56,202,0.10);
+  color: #4338ca;
+  border-color: rgba(67,56,202,0.28);
+}
+[data-theme='light'] .badge-emerald {
+  background: rgba(5,150,105,0.08);
+  color: #047857;
+  border-color: rgba(5,150,105,0.28);
+}
+[data-theme='light'] .badge-amber {
+  background: rgba(180,83,9,0.08);
+  color: #b45309;
+  border-color: rgba(180,83,9,0.22);
+}
+[data-theme='light'] .badge-danger {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border-color: rgba(220,38,38,0.25);
+}
+
+/* ─── Light mode: Transaction rows ────────────────────────── */
+[data-theme='light'] .tx-row {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(99,102,241,0.14);
+}
+[data-theme='light'] .tx-row:hover {
+  background: rgba(255,255,255,1.0);
+  border-color: rgba(67,56,202,0.35);
+  box-shadow: 0 4px 20px rgba(67,56,202,0.10);
+}
+
+/* ─── Light mode: Modal overlay ────────────────────────────── */
+[data-theme='light'] .modal-overlay {
+  background: rgba(109,95,230,0.18);
+  backdrop-filter: blur(16px);
+}
+[data-theme='light'] .modal-content {
+  border-color: var(--clr-border);
+}
+
+/* ─── Light mode: Scrollbar (branded indigo) ───────────────── */
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: rgba(237,233,254,0.5);
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: rgba(67,56,202,0.25);
+  border-radius: 4px;
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(67,56,202,0.50);
+}
+
+/* ─── Light mode: Modal content white card ─────────────────── */
+[data-theme='light'] .modal-content {
+  background: linear-gradient(160deg, #ffffff 0%, #f6f5ff 100%);
+  box-shadow: 0 24px 80px rgba(67,56,202,0.20), 0 4px 16px rgba(67,56,202,0.12);
+}
+
+/* ─── Light mode: Section tag gradient line & text ─────────── */
+[data-theme='light'] .section-tag::before {
+  background: linear-gradient(90deg, #4338ca, #7c3aed);
+}
+[data-theme='light'] .section-tag span {
+  background: linear-gradient(90deg, #4338ca, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Light mode: Divider subtle gradient ─────────────────── */
+[data-theme='light'] .divider {
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.28), transparent);
+}
+
+/* ─── Light mode: Balance number gradient text ────────────── */
+[data-theme='light'] .balance-number {
+  color: #1e1b4b;
+}
+
+/* ─── Light mode: Live badge green ───────────────────────── */
+[data-theme='light'] .badge-live {
+  color: #047857;
+}
+[data-theme='light'] .badge-live::before {
+  background: #059669;
+}
+
+/* ─── Light mode: Text selection ──────────────────────────── */
+[data-theme='light'] ::selection {
+  background: rgba(67,56,202,0.18);
+  color: #1e1b4b;
+}
+
+/* ─── Light mode: Shimmer skeleton ───────────────────────── */
+[data-theme='light'] .shimmer {
+  background: linear-gradient(90deg,
+    rgba(237,233,254,0.8) 25%,
+    rgba(200,200,255,0.5) 50%,
+    rgba(237,233,254,0.8) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── SMOOTH THEME TRANSITION ──
+   All elements smoothly interpolate when data-theme changes.
+   Excludes transforms/animations that should stay snappy. ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition:
+    background-color 0.35s cubic-bezier(0.4,0,0.2,1),
+    border-color 0.35s cubic-bezier(0.4,0,0.2,1),
+    color 0.25s cubic-bezier(0.4,0,0.2,1),
+    box-shadow 0.35s cubic-bezier(0.4,0,0.2,1),
+    opacity 0.25s ease;
 }
+/* Restore fast transitions for interactive elements */
+.btn, .nav-item, .card-hover, .input {
+  transition: all 0.18s ease !important;
+}
+
+
+
+/* ── 4. BASE RESET ── */
+/* box-sizing is already on the * block above for theme transitions */
 
 html {
   scroll-behavior: smooth;
@@ -784,10 +1115,11 @@ body {
     width: 100% !important;
   }
   .landing-stats-grid {
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
   }
   .landing-stats-grid > div[style*="width: 1"] {
-    display: none !important; /* hide vertical dividers */
+    display: none !important; /* hide vertical dividers on mobile */
   }
   .landing-steps-grid {
     grid-template-columns: 1fr !important;
@@ -821,29 +1153,165 @@ body {
   backdrop-filter: blur(4px);
 }
 
-/* Modal & Popup standard classes */
+/* ══════════════════════════════════════════════════
+   MODAL / POPUP SYSTEM — Standardized & Mobile-First
+   ══════════════════════════════════════════════════
+
+   Usage in JSX:
+     <div className="modal-overlay" onClick={handleBackdropClick}>
+       <div className="modal-content" onClick={e => e.stopPropagation()}>
+         …
+       </div>
+     </div>
+
+   On desktop  → centered card with scale-up animation
+   On mobile   → bottom sheet that slides up from bottom
+   ══════════════════════════════════════════════════ */
+
+/* ── Backdrop ── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 8, 18, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  z-index: 300;
+
+  /* Centered on desktop */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
-  padding: 24px;
+
+  /* Padding prevents modal touching screen edges on desktop */
+  padding: 20px;
+
+  /* Dark blurred backdrop */
+  background: rgba(3, 8, 18, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  /* Fade in */
+  animation: modal-backdrop-in 0.22s ease forwards;
+
+  /* Allow scrolling the overlay itself on very short viewports */
+  overflow-y: auto;
 }
+
+/* ── Modal card (desktop) ── */
 .modal-content {
   background: var(--clr-bg-surface);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-xl);
+
   width: 100%;
-  max-width: 420px;
-  max-height: 90vh;
-  position: relative;
+  max-width: 440px;
+
+  /* Safety cap so content never overflows off-screen */
+  max-height: calc(100vh - 48px);
   overflow-y: auto;
   overflow-x: hidden;
+
+  position: relative;
+
+  /* Subtle inner glow top */
+  box-shadow:
+    0 0 0 1px rgba(129,140,248,0.08),
+    0 32px 80px rgba(0,0,0,0.55),
+    0 8px 24px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+
+  /* Pop-in animation */
+  animation: modal-content-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+
+  /* Custom scrollbar inside modal */
+  scrollbar-width: thin;
+  scrollbar-color: var(--clr-border) transparent;
+}
+
+/* ── Light theme adjustments ── */
+[data-theme='light'] .modal-overlay {
+  background: rgba(248, 247, 255, 0.72);
+}
+[data-theme='light'] .modal-content {
+  background: #ffffff;
+  border-color: rgba(99, 102, 241, 0.18);
+  box-shadow:
+    0 32px 80px rgba(99,102,241,0.12),
+    0 8px 24px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+/* ── Modal size variants ── */
+.modal-content.modal-sm  { max-width: 340px; }
+.modal-content.modal-lg  { max-width: 560px; }
+.modal-content.modal-xl  { max-width: 700px; }
+
+/* ── Keyframes: desktop ── */
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modal-content-in {
+  from { opacity: 0; transform: scale(0.93) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════
+   MOBILE: Bottom Sheet (≤ 520px wide)
+   On phones, the modal slides up from bottom like
+   every modern mobile app (iOS/Android standard)
+   ══════════════════════════════════════════════════ */
+@media (max-width: 520px) {
+
+  /* Align overlay to the bottom on mobile */
+  .modal-overlay {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;  /* sheet handles its own padding */
+  }
+
+  /* Slide-up sheet */
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+
+    /* Rounded top corners, flat bottom (sticks to screen edge) */
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+
+    /* Respect device safe areas (notch/home bar) */
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+
+    /* Max 92% of screen height so user can see content behind */
+    max-height: 92vh;
+
+    /* Animate from below */
+    animation: modal-sheet-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Drag handle indicator at top of sheet */
+  .modal-content::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--clr-border);
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+
+  @keyframes modal-sheet-in {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}
+
+/* ── Prevent body scroll when modal is open ──
+   Add class="modal-open" to <body> via JS when any modal shows.
+   In React you can do: useEffect(() => { document.body.classList.add('modal-open'); return () => document.body.classList.remove('modal-open'); }, [show]);
+   ── */
+body.modal-open {
+  overflow: hidden;
+  /* Prevent layout shift from scrollbar disappearing */
+  padding-right: var(--scrollbar-width, 0px);
 }
 
 /* ── Tablet adjustments (768–1024px) ── */

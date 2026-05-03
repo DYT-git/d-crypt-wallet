@@ -3,6 +3,8 @@ import { Outlet }   from 'react-router-dom';
 import Sidebar      from '../components/Sidebar';
 import TopHeader    from '../components/TopHeader';
 import OmniChat     from '../components/OmniChat';
+import SupportBubble from '../components/SupportBubble';
+import HelpCenterDial from '../components/HelpCenterDial';
 
 /*
   DashboardLayout — The master shell (desktop + mobile)
@@ -63,8 +65,14 @@ export default function DashboardLayout() {
           </div>
         </main>
 
+        {/* Floating Help Center Dial */}
+        <HelpCenterDial />
+
         {/* Omni-Chat AI Tutor */}
         <OmniChat />
+
+        {/* Human Support Bubble */}
+        <SupportBubble />
 
       </div>
     </div>

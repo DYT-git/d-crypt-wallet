@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { usePrivy, useMfaEnrollment } from '@privy-io/react-auth';
 import { useNavigate }         from 'react-router-dom';
 import { supabase }            from '../supabase';
+import { useHelp }             from '../context/HelpContext';
 
 /* ═══════════════════════════════════════════════════════
    Account.jsx — Profile, Security & Wallet Settings
@@ -125,14 +126,16 @@ function InfoRow({ label, value, mono = false, copyable = false, badge }) {
    Gated by MFA: if no 2FA enrolled, export is blocked.
    If 2FA enrolled, Privy auto-prompts MFA on exportWallet().
 ═══════════════════════════════════════════════════════ */
-function RevealKeySection({ exportWallet, hasMfa }) {
+function RevealKeySection({ exportWallet, hasPasskey, hasTotp }) {
   const [step,        setStep]        = useState('locked');
   const [inputPhrase, setInputPhrase] = useState('');
   const [error,       setError]       = useState('');
   const CONFIRM_PHRASE = 'I understand';
 
+  const hasBoth = hasPasskey && hasTotp;
+
   // ─ If no MFA enrolled, block export entirely ─
-  if (!hasMfa) {
+  if (!hasBoth) {
     return (
       <div style={{
         background: 'rgba(245,158,11,0.05)',
@@ -144,15 +147,14 @@ function RevealKeySection({ exportWallet, hasMfa }) {
         <span style={{ fontSize: 22, flexShrink: 0 }}>🔒</span>
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--clr-text-amber)', marginBottom: 4 }}>
-            2FA Required to Export
+            Extreme Security Required
           </p>
           <p style={{ fontSize: 12, color: 'var(--clr-text-muted)', lineHeight: 1.6 }}>
-            You must set up at least one 2-Factor Authentication method (Passkey or
-            Authenticator App) before you can export your private key.
-            This protects your wallet from unauthorized access.
+            To export your private key, you must configure <strong>BOTH</strong> a Passkey and an Authenticator App.
+            This is a mandatory safeguard to protect your non-custodial wallet from unauthorized extraction.
           </p>
           <p style={{ fontSize: 11, color: 'var(--clr-text-amber)', marginTop: 8, fontWeight: 500 }}>
-            ↑ Configure 2FA in the section above to unlock this feature.
+            ↑ Configure both methods above to unlock this feature.
           </p>
         </div>
       </div>
@@ -371,18 +373,27 @@ function MfaSection() {
   );
 }
 
+import PasskeyModal from '../components/PasskeyModal';
+
 export default function Account() {
   const { user, logout, exportWallet } = usePrivy();
   const navigate = useNavigate();
+  const { openAi, openSupport } = useHelp();
 
   const [profile,      setProfile]      = useState(null);
   const [loading,      setLoading]      = useState(true);
   const [editUsername, setEditUsername] = useState(false);
   const [newUsername,  setNewUsername]  = useState('');
   const [saveStatus,   setSaveStatus]   = useState('idle'); // idle | saving | saved | error
+  const [authAction,   setAuthAction]   = useState(null); // { type: 'revoke' | 'trust', deviceId: string }
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const walletAddress = user?.wallet?.address || '';
   const userEmail     = user?.email?.address  || user?.google?.email || '';
+  const currentDeviceId = localStorage.getItem('dcrypt_device_id');
+  
+  const hasPasskey = user?.mfaMethods?.includes('passkey') || false;
+  const hasTotp    = user?.mfaMethods?.includes('totp') || false;
 
   /* ── Load profile ── */
   useEffect(() => {
@@ -392,15 +403,16 @@ export default function Account() {
 
   const loadProfile = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data: userData } = await supabase
       .from('users')
       .select('*')
       .eq('wallet_address', walletAddress)
       .single();
-    if (data) {
-      setProfile(data);
-      setNewUsername(data.username || '');
+    if (userData) {
+      setProfile(userData);
+      setNewUsername(userData.username || '');
     }
+    
     setLoading(false);
   };
 
@@ -425,6 +437,52 @@ export default function Account() {
       setEditUsername(false);
       setTimeout(() => setSaveStatus('idle'), 2500);
     }
+  };
+
+  /* ── Device Management (God Mode) ── */
+  const executeAuthAction = async () => {
+    if (!profile?.session_token || !authAction) return;
+    setIsProcessing(true);
+
+    try {
+      const sessions = JSON.parse(profile.session_token);
+      let updatedSessions = [...sessions];
+
+      if (authAction.type === 'revoke') {
+        updatedSessions = sessions.filter(s => s.deviceId !== authAction.deviceId);
+      } else if (authAction.type === 'trust') {
+        const idx = updatedSessions.findIndex(s => s.deviceId === authAction.deviceId);
+        if (idx !== -1) {
+          updatedSessions[idx].trusted = true;
+          updatedSessions[idx].highRisk = false;
+        }
+      } else if (authAction.type === 'toggleLockdown') {
+        const newLockState = !profile.device_lock;
+        await supabase
+          .from('users')
+          .update({ 
+            device_lock: newLockState,
+            locked_device_id: newLockState ? currentDeviceId : null 
+          })
+          .eq('wallet_address', walletAddress);
+        setProfile(p => ({ ...p, device_lock: newLockState, locked_device_id: newLockState ? currentDeviceId : null }));
+        setIsProcessing(false);
+        setAuthAction(null);
+        return; // Don't do the session update below
+      }
+      
+      await supabase
+        .from('users')
+        .update({ session_token: JSON.stringify(updatedSessions) })
+        .eq('wallet_address', walletAddress);
+
+      setProfile(p => ({ ...p, session_token: JSON.stringify(updatedSessions) }));
+    } catch (e) {
+      console.error("Failed to execute action", e);
+    }
+    
+    setIsProcessing(false);
+    setAuthAction(null);
   };
 
   /* ── Logout handler ── */
@@ -704,6 +762,98 @@ export default function Account() {
             </div>
           </Section>
 
+          {/* ── Active Devices ── */}
+          {(() => {
+            let sessions = [];
+            try {
+              if (profile?.session_token) {
+                const parsed = JSON.parse(profile.session_token);
+                if (Array.isArray(parsed)) sessions = parsed;
+              }
+            } catch (e) {}
+            
+            if (sessions.length === 0) return null;
+
+            return (
+              <Section
+                title="Active Devices"
+                subtitle="Where you're currently logged in"
+                icon={
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                    <rect x="9" y="9" width="6" height="6"></rect>
+                    <line x1="9" y1="1" x2="9" y2="4"></line>
+                    <line x1="15" y1="1" x2="15" y2="4"></line>
+                    <line x1="9" y1="20" x2="9" y2="23"></line>
+                    <line x1="15" y1="20" x2="15" y2="23"></line>
+                    <line x1="20" y1="9" x2="23" y2="9"></line>
+                    <line x1="20" y1="14" x2="23" y2="14"></line>
+                    <line x1="1" y1="9" x2="4" y2="9"></line>
+                    <line x1="1" y1="14" x2="4" y2="14"></line>
+                  </svg>
+                }
+              >
+                {sessions.map((s, i) => {
+                  const isCurrent = s.deviceId === currentDeviceId;
+                  const lastActiveDate = new Date(s.lastActive).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                  
+                  return (
+                    <div key={s.deviceId} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 0', borderBottom: i < sessions.length - 1 ? '1px solid var(--clr-border)' : 'none'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{
+                            width: 34, height: 34, borderRadius: 'var(--radius-sm)',
+                            background: isCurrent ? 'var(--clr-emerald-dim)' : 'var(--clr-bg-card)',
+                            border: `1px solid ${isCurrent ? 'var(--clr-emerald-border)' : 'var(--clr-border)'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: isCurrent ? 'var(--clr-text-emerald)' : 'var(--clr-text-muted)', flexShrink: 0,
+                          }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                              <line x1="8" y1="21" x2="16" y2="21"></line>
+                              <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--clr-text-white)', marginBottom: 2 }}>
+                              {s.deviceName || 'Unknown Device'}
+                              {isCurrent && <span className="badge badge-emerald" style={{ marginLeft: 8, fontSize: 9, padding: '2px 6px' }}>This Device</span>}
+                              {!isCurrent && s.highRisk && <span className="badge badge-amber" style={{ marginLeft: 8, fontSize: 9, padding: '2px 6px' }}>High Risk IP</span>}
+                            </p>
+                            <p style={{ fontSize: 11, color: 'var(--clr-text-muted)' }}>
+                              {s.location && `${s.location} · `}Last active: {lastActiveDate}
+                            </p>
+                          </div>
+                      </div>
+                      {!isCurrent && (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {!s.trusted && (
+                            <button 
+                              className="btn btn-emerald btn-sm" 
+                              style={{ fontSize: 11, padding: '6px 10px' }} 
+                              onClick={() => setAuthAction({ type: 'trust', deviceId: s.deviceId })}
+                            >
+                              Mark as Safe
+                            </button>
+                          )}
+                          <button 
+                            className="btn btn-secondary btn-sm" 
+                            style={{ fontSize: 11, padding: '6px 10px' }} 
+                            onClick={() => setAuthAction({ type: 'revoke', deviceId: s.deviceId })}
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Section>
+            );
+          })()}
+
           {/* ── Wallet Address Full ── */}
           <Section
             title="Wallet Address"
@@ -792,7 +942,7 @@ export default function Account() {
               </div>
             </div>
 
-            <RevealKeySection exportWallet={exportWallet} hasMfa={user?.mfaMethods?.length > 0} />
+            <RevealKeySection exportWallet={exportWallet} hasPasskey={hasPasskey} hasTotp={hasTotp} />
           </div>
 
           {/* ── Danger Zone ── */}
@@ -915,8 +1065,124 @@ export default function Account() {
             <MfaSection />
           </Section>
 
+          {/* ── Vault Lockdown Mode ── */}
+          <Section
+            title="Vault Lockdown Mode"
+            subtitle="Block all new logins to this account"
+            icon={
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1" fill="currentColor"/>
+              </svg>
+            }
+          >
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: profile?.device_lock ? 'rgba(239,68,68,0.05)' : 'var(--clr-bg-card)',
+              padding: '14px 16px', borderRadius: 'var(--radius-md)',
+              border: `1px solid ${profile?.device_lock ? 'var(--clr-border-danger)' : 'var(--clr-border)'}`,
+              marginBottom: 16
+            }}>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: profile?.device_lock ? 'var(--clr-text-red)' : 'var(--clr-text-white)', marginBottom: 2 }}>
+                  Strict Device Lock
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--clr-text-muted)' }}>
+                  {profile?.device_lock 
+                    ? 'Active — Logins from unrecognized devices are completely blocked' 
+                    : 'Disabled — Standard login flow active'}
+                </p>
+              </div>
+              <button 
+                className={`btn ${profile?.device_lock ? 'btn-danger' : 'btn-emerald'} btn-sm`}
+                onClick={() => setAuthAction({ type: 'toggleLockdown' })}
+                style={{ fontSize: 11 }}
+              >
+                {profile?.device_lock ? 'Disable Lockdown' : 'Enable Lockdown'}
+              </button>
+            </div>
+            
+            {profile?.device_lock && (
+              <div style={{
+                background: 'rgba(239,68,68,0.05)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 'var(--radius-md)', padding: '12px 14px',
+              }}>
+                <p style={{ fontSize: 11, color: 'var(--clr-text-red)', lineHeight: 1.5 }}>
+                  <span style={{ fontWeight: 600 }}>WARNING:</span> The vault is currently sealed to this specific physical device. No one can access the dashboard from a new device, even if they have your password or passkey.
+                </p>
+              </div>
+            )}
+          </Section>
+
+          {/* ── Help & Support ── */}
+          <Section
+            title="Help & Support"
+            subtitle="Get assistance from AI or our team"
+            icon={
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            }
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={openAi}
+                className="btn btn-secondary"
+                style={{ justifyContent: 'flex-start', padding: '12px 16px', fontSize: 13, gap: 12, background: 'var(--clr-bg-card)', border: '1px solid var(--clr-border)' }}
+              >
+                <span style={{ fontSize: 16 }}>🤖</span>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--clr-text-white)' }}>Ask AI Tutor</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--clr-text-muted)' }}>Instant answers for crypto and Web3 questions</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={openSupport}
+                className="btn btn-secondary"
+                style={{ justifyContent: 'flex-start', padding: '12px 16px', fontSize: 13, gap: 12, background: 'var(--clr-bg-card)', border: '1px solid var(--clr-border)' }}
+              >
+                <span style={{ fontSize: 16 }}>💬</span>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--clr-text-white)' }}>Human Support</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--clr-text-muted)' }}>Open a ticket or chat with our team</p>
+                </div>
+              </button>
+            </div>
+          </Section>
+
         </div>
       </div>
+
+      {/* ── God Mode Biometric Auth Modal ── */}
+      <PasskeyModal
+        show={!!authAction}
+        onClose={() => !isProcessing && setAuthAction(null)}
+        onVerify={executeAuthAction}
+        state={isProcessing ? 'processing' : 'idle'}
+        title={
+          authAction?.type === 'revoke' ? 'Revoke Device' : 
+          authAction?.type === 'trust' ? 'Trust Device' :
+          authAction?.type === 'toggleLockdown' ? 'Vault Lockdown' : ''
+        }
+        subtitle="Biometric verification required"
+        accentColor="var(--clr-emerald)"
+        rows={[
+          { 
+            label: 'Action', 
+            value: authAction?.type === 'revoke' ? 'Force Logout Remote Device' : 
+                   authAction?.type === 'trust' ? 'Mark Device as Trusted' :
+                   authAction?.type === 'toggleLockdown' ? (profile?.device_lock ? 'Disable Vault Lockdown' : 'Enable Vault Lockdown') : '',
+            bold: true 
+          }
+        ]}
+      />
     </div>
   );
 }

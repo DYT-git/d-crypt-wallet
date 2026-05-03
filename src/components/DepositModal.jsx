@@ -1,5 +1,5 @@
 import QRCode from 'react-qr-code';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DepositQR from './DepositQR';
 
 const QRCodeComponent = QRCode?.default || QRCode;
@@ -18,6 +18,12 @@ export default function DepositModal({
 
   if (!show) return null;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    return () => document.body.classList.remove('modal-open');
+  }, []);
+
   const handleCopy = () => {
     if (!walletAddress) return;
     navigator.clipboard.writeText(walletAddress);
@@ -32,7 +38,7 @@ export default function DepositModal({
         if (e.target === e.currentTarget && upiStatus === 'idle') onClose();
       }}
     >
-      <div className="modal-content animate-scale-in">
+      <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
         {/* Top glow strip */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 1,

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate } from 'react-router-dom';
+import ThemeToggle from '../components/ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
 
 /* ─────────────────────────────────────────────
    LANDING PAGE — D-CRYPT WEB3 VAULT
@@ -151,29 +153,43 @@ function useCountUp(target, duration = 1800) {
   return count;
 }
 
+/* ── Smart number formatter ── */
+function fmtStat(n) {
+  if (n >= 10000000) return { val: (n / 10000000).toFixed(1), unit: 'Cr' };
+  if (n >= 100000)   return { val: (n / 100000).toFixed(1),   unit: 'L'  };
+  if (n >= 1000)     return { val: (n / 1000).toFixed(1),     unit: 'K'  };
+  return { val: n.toFixed(0), unit: '' };
+}
+
 /* ── Live Stats Bar Component ── */
-function StatCell({ value, label, prefix = '', suffix = '', color = 'var(--clr-accent)', loaded }) {
-  const animated = useCountUp(loaded ? value : 0, 2000);
-  const display = loaded ? animated : 0;
+function StatCell({ rawValue, label, prefix = '', color = 'var(--clr-accent)', loaded, sublabel = '' }) {
+  const { val, unit } = fmtStat(loaded ? rawValue : 0);
+  const numericVal = parseFloat(val) || 0;
+  const animated = useCountUp(loaded ? numericVal * 10 : 0, 2000);
+  const display = loaded ? (animated / 10).toFixed(unit ? 1 : 0) : '0';
+
   return (
-    <div style={{ padding: '40px 20px', textAlign: 'center', flex: 1 }}>
+    <div style={{ padding: '36px 20px', textAlign: 'center', flex: 1, minWidth: 120 }}>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 700,
+        fontFamily: 'var(--font-mono)', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 700,
         color: 'var(--clr-text-white)', letterSpacing: -1, lineHeight: 1,
-        marginBottom: 4,
+        marginBottom: 4, display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3,
       }}>
-        <span style={{ color }}>{prefix}</span>
-        {display.toLocaleString()}
-        <span style={{ color }}>{suffix}</span>
+        {prefix && <span style={{ color, fontSize: '0.7em' }}>{prefix}</span>}
+        <span>{display}</span>
+        {unit && <span style={{ color, fontSize: '0.55em', fontWeight: 700, letterSpacing: 1 }}>{unit}</span>}
       </div>
       <div style={{
-        fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px',
-        color: 'var(--clr-text-muted)', marginTop: 10, fontWeight: 600,
+        fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.8px',
+        color: 'var(--clr-text-muted)', marginTop: 8, fontWeight: 600,
       }}>{label}</div>
+      {sublabel && (
+        <div style={{ fontSize: 9, color, marginTop: 4, opacity: 0.7 }}>{sublabel}</div>
+      )}
       {loaded && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
-          marginTop: 8, fontSize: 9, color: 'var(--clr-emerald)',
+          marginTop: 6, fontSize: 9, color: 'var(--clr-emerald)',
           textTransform: 'uppercase', letterSpacing: '1px',
         }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--clr-emerald)', display: 'inline-block', animation: 'dc-pulse 1.5s ease-in-out infinite' }} />
@@ -185,40 +201,45 @@ function StatCell({ value, label, prefix = '', suffix = '', color = 'var(--clr-a
 }
 
 function LiveStatsBar({ liveStats, statsLoaded }) {
-  const volumeCr = Math.round(liveStats.volumeInr / 100000);
   return (
     <div className="web3-content landing-stats-grid" style={{
       borderTop: '1px solid var(--clr-border)',
       borderBottom: '1px solid var(--clr-border)',
       display: 'flex',
       alignItems: 'stretch',
+      flexWrap: 'wrap',
     }}>
-      <StatCell value={liveStats.users} label="Registered Users" prefix="" suffix="+" color="var(--clr-accent)" loaded={statsLoaded} />
-      <div style={{ width: 1, background: 'var(--clr-border)' }} />
-      <StatCell value={liveStats.transactions} label="Transactions" prefix="" suffix="" color="var(--clr-purple)" loaded={statsLoaded} />
-      <div style={{ width: 1, background: 'var(--clr-border)' }} />
-      <StatCell value={volumeCr} label="Volume (₹ Lakhs)" prefix="₹" suffix="" color="var(--clr-emerald)" loaded={statsLoaded} />
-      <div style={{ width: 1, background: 'var(--clr-border)' }} />
-      <div style={{ padding: '40px 20px', textAlign: 'center', flex: 1 }}>
+      <StatCell rawValue={liveStats.users} label="Registered Users" suffix="+" color="var(--clr-accent)" loaded={statsLoaded} sublabel="wallets" />
+      <div style={{ width: 1, background: 'var(--clr-border)', flexShrink: 0 }} />
+      <StatCell rawValue={liveStats.transactions} label="Total Transactions" color="var(--clr-purple)" loaded={statsLoaded} sublabel="on-chain" />
+      <div style={{ width: 1, background: 'var(--clr-border)', flexShrink: 0 }} />
+      <StatCell rawValue={liveStats.volumeTraded} label="Traded Volume" prefix="₹" color="var(--clr-emerald)" loaded={statsLoaded} sublabel="swaps & sends" />
+      <div style={{ width: 1, background: 'var(--clr-border)', flexShrink: 0 }} />
+      <StatCell rawValue={liveStats.depositsInr} label="UPI Deposited" prefix="₹" color="var(--clr-blue)" loaded={statsLoaded} sublabel="completed deposits" />
+      <div style={{ width: 1, background: 'var(--clr-border)', flexShrink: 0 }} />
+      <div style={{ padding: '36px 20px', textAlign: 'center', flex: 1, minWidth: 120 }}>
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 700,
+          fontFamily: 'var(--font-mono)', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 700,
           color: 'var(--clr-text-white)', letterSpacing: -1, lineHeight: 1, marginBottom: 4,
         }}>
-          99.9<span style={{ color: 'var(--clr-amber)' }}>%</span>
+          99.9<span style={{ color: 'var(--clr-amber)', fontSize: '0.6em', fontWeight: 700 }}>%</span>
         </div>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--clr-text-muted)', marginTop: 10, fontWeight: 600 }}>Uptime SLA</div>
+        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.8px', color: 'var(--clr-text-muted)', marginTop: 8, fontWeight: 600 }}>Uptime SLA</div>
+        <div style={{ fontSize: 9, color: 'var(--clr-amber)', marginTop: 4, opacity: 0.7 }}>guaranteed</div>
       </div>
     </div>
   );
 }
 
 
+
 export default function Landing() {
   const { login } = usePrivy();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [liveStats, setLiveStats] = useState({ users: 0, transactions: 0, volumeInr: 0 });
+  const [liveStats, setLiveStats] = useState({ users: 0, transactions: 0, volumeTraded: 0, depositsInr: 0 });
   const [statsLoaded, setStatsLoaded] = useState(false);
 
   useEffect(() => {
@@ -233,7 +254,12 @@ export default function Landing() {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/stats`);
         const data = await res.json();
         if (data.success) {
-          setLiveStats({ users: data.users, transactions: data.transactions, volumeInr: data.volumeInr });
+          setLiveStats({ 
+            users: data.users, 
+            transactions: data.transactions, 
+            volumeTraded: data.volumeTraded || 0,
+            depositsInr: data.depositsInr || 0,
+          });
           setStatsLoaded(true);
         }
       } catch (e) {
@@ -267,7 +293,9 @@ export default function Landing() {
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: scrolled ? '14px 40px' : '24px 40px',
-        background: scrolled ? 'rgba(3,8,18,0.9)' : 'transparent',
+        background: scrolled 
+          ? (isDark ? 'rgba(3,8,18,0.90)' : 'rgba(240,244,255,0.90)')
+          : 'transparent',
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
         borderBottom: scrolled ? '1px solid var(--clr-border)' : '1px solid transparent',
         transition: 'var(--transition-slow)',
@@ -309,6 +337,7 @@ export default function Landing() {
 
         {/* CTA + Hamburger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle />
           <button
             className="btn btn-ghost btn-sm"
             onClick={handleLogin}

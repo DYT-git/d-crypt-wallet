@@ -61,16 +61,19 @@ export default function Send() {
   // idle | sending | success | error
   const [txError,         setTxError]         = useState('');
 
+  const [profile,         setProfile]         = useState(null);
+
   /* ── Load sender profile ── */
   useEffect(() => {
     if (!walletAddress) return;
     supabase
       .from('users')
-      .select('username, inr_balance')
+      .select('username, inr_balance, session_token')
       .eq('wallet_address', walletAddress)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
+          setProfile(data);
           setSenderUsername(data.username  || '');
           setInrBalance(data.inr_balance   || 0);
         }
@@ -185,12 +188,26 @@ export default function Send() {
     ? (parsedAmount / (livePrice[selectedToken] || 1))
     : 0;
 
+  /* ── Security Checks ── */
+  const currentDeviceId = localStorage.getItem('dcrypt_device_id');
+  let isHighRisk = false;
+  if (profile?.session_token) {
+    try {
+      const sessions = JSON.parse(profile.session_token);
+      const mySession = sessions.find(s => s.deviceId === currentDeviceId);
+      if (mySession && mySession.highRisk && !mySession.trusted) {
+        isHighRisk = true;
+      }
+    } catch(e) {}
+  }
+
   /* ── Can the user proceed? ── */
   const canReview =
     lookupStatus === 'found' &&
     parsedAmount > 0 &&
     parsedAmount <= inrBalance &&
-    txState === 'idle';
+    txState === 'idle' &&
+    !isHighRisk;
 
   /* ── Open confirmation popup ── */
   const handleReview = () => {
@@ -407,6 +424,21 @@ export default function Send() {
                 </div>
               </div>
             ))}
+            {/* High Risk Overlay */}
+            {isHighRisk && (
+              <div style={{
+                marginTop: 16, padding: 14, borderRadius: 'var(--radius-md)',
+                background: 'rgba(239,68,68,0.05)', border: '1px solid var(--clr-border-danger)'
+              }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--clr-text-red)', marginBottom: 4 }}>
+                  ⚠ Security Lockdown
+                </p>
+                <p style={{ fontSize: 12, color: 'var(--clr-text-muted)', lineHeight: 1.5 }}>
+                  Unfamiliar IP detected. Transfers are blocked until you mark this device as safe from your primary device.
+                </p>
+              </div>
+            )}
+
           </div>
 
           {/* Security badge */}

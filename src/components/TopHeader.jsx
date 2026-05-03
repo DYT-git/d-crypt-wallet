@@ -2,6 +2,7 @@ import { usePrivy }        from '@privy-io/react-auth';
 import { useLocation, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase }          from '../supabase';
+import ThemeToggle           from './ThemeToggle';
 
 /* Map each route path to a readable page title + subtitle */
 const PAGE_META = {
@@ -49,7 +50,7 @@ export default function TopHeader({ onMenuToggle }) {
     <header style={{
       height: 68,
       borderBottom: '1px solid var(--clr-border)',
-      background: 'rgba(8, 15, 30, 0.85)',
+      background: 'var(--clr-bg-surface)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
       display: 'flex',
@@ -116,6 +117,9 @@ export default function TopHeader({ onMenuToggle }) {
             Sepolia
           </span>
         </div>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Username + address chip */}
         <button

@@ -499,13 +499,17 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page,        setPage]        = useState(0);
   const [newTxIds,    setNewTxIds]    = useState(new Set());
-  const [stats,       setStats]       = useState({
-    total: 0, volume: 0, users: 0,
+  const [stats, setStats] = useState({
+    total: 0, volumeTraded: 0, depositsInr: 0, users: 0,
   });
 
   const realtimeRef = useRef(null);
   const searchRef   = useRef(searchQuery);
   searchRef.current = searchQuery;
+
+  /* Profile card state for username search */
+  const [userProfile,    setUserProfile]    = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   /* ── Load transactions from Supabase ── */
   const loadTx = async (reset = true) => {
@@ -515,6 +519,8 @@ export default function History() {
       .from('transactions')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
+      // Exclude pending UPI deposits — only show completed/failed in public ledger
+      .not('status', 'eq', 'pending')
       .range(reset ? 0 : page * PAGE_SIZE, (reset ? 0 : page) * PAGE_SIZE + PAGE_SIZE - 1);
 
     const { data, error, count } = await q;
@@ -539,21 +545,24 @@ export default function History() {
 
   /* ── Load stats ── */
   const loadStats = async () => {
-    const [{ count: total }, { data: volData }, { count: users }] = await Promise.all([
+    const [
+      { count: total },
+      { count: users },
+      { data: tradedData },
+      { data: depositData },
+    ] = await Promise.all([
       supabase.from('transactions').select('*', { count: 'exact', head: true }),
-      supabase.from('transactions').select('amount_inr'),
       supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('transactions').select('amount_inr').eq('status', 'completed').in('txn_type', ['swap', 'crypto_send', 'inr_send']).not('amount_inr', 'is', null),
+      supabase.from('transactions').select('amount_inr').eq('status', 'completed').eq('txn_type', 'deposit').not('amount_inr', 'is', null),
     ]);
 
-    const volume = Array.isArray(volData)
-      ? volData.reduce((sum, r) => sum + (parseFloat(r.amount_inr) || 0), 0)
-      : 0;
+    const volumeTraded = Array.isArray(tradedData)
+      ? tradedData.reduce((s, r) => s + (parseFloat(r.amount_inr) || 0), 0) : 0;
+    const depositsInr = Array.isArray(depositData)
+      ? depositData.reduce((s, r) => s + (parseFloat(r.amount_inr) || 0), 0) : 0;
 
-    setStats({
-      total:  total  || 0,
-      volume: volume || 0,
-      users:  users  || 0,
-    });
+    setStats({ total: total || 0, users: users || 0, volumeTraded, depositsInr });
   };
 
   /* ── Initial load ── */
@@ -572,6 +581,8 @@ export default function History() {
         table: 'transactions',
       }, (payload) => {
         const newTx = payload.new;
+        // Don't show pending deposits in the public ledger
+        if (newTx.txn_type === 'deposit' && newTx.status === 'pending') return;
         setAllTx(prev => [newTx, ...prev]);
         setNewTxIds(prev => new Set([...prev, newTx.id]));
         setTimeout(() => {
@@ -615,6 +626,39 @@ export default function History() {
     setDisplayed(filtered.slice(0, (page + 1) * PAGE_SIZE));
   }, [allTx, activeFilter, searchQuery, page]);
 
+  /* ── Fetch user profile when search looks like a username ── */
+  useEffect(() => {
+    const q = searchQuery.trim().replace(/^@/, '').toLowerCase();
+    // A username search: not empty, no spaces, no 0x prefix, no hash-like string
+    const looksLikeUsername = q.length >= 2 && !q.includes(' ') && !q.startsWith('0x') && q.length < 40;
+    if (!looksLikeUsername) { setUserProfile(null); return; }
+
+    const timer = setTimeout(async () => {
+      setProfileLoading(true);
+      try {
+        const { data } = await supabase
+          .from('users')
+          .select('username, wallet_address, created_at')
+          .ilike('username', q)
+          .limit(1)
+          .single();
+        if (data) {
+          // Count their transactions
+          const { count } = await supabase
+            .from('transactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('username', data.username);
+          setUserProfile({ ...data, txCount: count || 0 });
+        } else {
+          setUserProfile(null);
+        }
+      } catch { setUserProfile(null); }
+      setProfileLoading(false);
+    }, 400); // debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   /* ─────────────────────────────────────────────── */
   return (
     <div className="animate-fade-in">
@@ -634,14 +678,16 @@ export default function History() {
 
       {/* ── Stats row ── */}
       <div style={{
-        display: 'flex', gap: 14, marginBottom: 24,
-        flexWrap: 'wrap',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        gap: 12, marginBottom: 24,
       }}>
         {[
           {
             label: 'Total Transactions',
             value: stats.total.toLocaleString('en-IN'),
             color: 'var(--clr-accent)',
+            sub: 'All time',
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -650,14 +696,27 @@ export default function History() {
             ),
           },
           {
-            label: 'Total Volume',
-            value: `₹${stats.volume.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
+            label: 'Traded Volume',
+            value: `₹${stats.volumeTraded.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
             color: 'var(--clr-emerald)',
+            sub: 'Swaps & Sends',
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="1" x2="12" y2="23"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            ),
+          },
+          {
+            label: 'UPI Deposited',
+            value: `₹${stats.depositsInr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
+            color: 'var(--clr-blue)',
+            sub: 'Completed deposits',
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"/>
+                <polyline points="5 12 12 5 19 12"/>
               </svg>
             ),
           },
@@ -665,6 +724,7 @@ export default function History() {
             label: 'Active Wallets',
             value: stats.users.toLocaleString('en-IN'),
             color: 'var(--clr-purple)',
+            sub: 'Registered users',
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -673,15 +733,16 @@ export default function History() {
             ),
           },
         ].map((s) => (
-          <div key={s.label} className="stat-card" style={{ flex: '1 1 160px', minWidth: 0 }}>
+          <div key={s.label} className="stat-card" style={{ minWidth: 0 }}>
             <div style={{
               display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', marginBottom: 10,
+              justifyContent: 'space-between', marginBottom: 8,
             }}>
-              <span className="stat-label">{s.label}</span>
+              <span className="stat-label" style={{ fontSize: 9 }}>{s.label}</span>
               <span style={{ color: s.color }}>{s.icon}</span>
             </div>
-            <div className="stat-value" style={{ fontSize: 22 }}>{s.value}</div>
+            <div className="stat-value" style={{ fontSize: 18, letterSpacing: -0.5 }}>{s.value}</div>
+            <p style={{ fontSize: 10, color: 'var(--clr-text-muted)', marginTop: 4 }}>{s.sub}</p>
           </div>
         ))}
       </div>
@@ -692,6 +753,84 @@ export default function History() {
         gap: 12, marginBottom: 16,
         flexWrap: 'wrap',
       }}>
+
+        {/* ── User Profile Card (appears when username search matches) ── */}
+        {(userProfile || profileLoading) && (
+          <div style={{ width: '100%', marginBottom: 4 }}>
+            {profileLoading ? (
+              <div className="shimmer" style={{ height: 90, borderRadius: 'var(--radius-md)' }} />
+            ) : userProfile && (
+              <div style={{
+                background: 'var(--clr-bg-card)',
+                border: '1px solid var(--clr-accent-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '16px 20px',
+                display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+                boxShadow: 'var(--shadow-accent)',
+                animation: 'dc-fade-in 0.25s ease',
+              }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--clr-accent-dim), var(--clr-purple-dim))',
+                  border: '2px solid var(--clr-accent-border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 20, fontWeight: 700, color: 'var(--clr-accent)',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  {userProfile.username?.[0]?.toUpperCase() || '?'}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--clr-text-white)' }}>
+                      @{userProfile.username}
+                    </span>
+                    <span className="badge badge-accent" style={{ fontSize: 9 }}>Verified User</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--clr-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>Wallet</div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--clr-text-secondary)' }}>
+                        {userProfile.wallet_address
+                          ? `${userProfile.wallet_address.slice(0, 8)}...${userProfile.wallet_address.slice(-6)}`
+                          : '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--clr-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>Joined</div>
+                      <span style={{ fontSize: 11, color: 'var(--clr-text-secondary)' }}>
+                        {userProfile.created_at
+                          ? new Date(userProfile.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--clr-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>Transactions</div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, color: 'var(--clr-accent)' }}>
+                        {userProfile.txCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dismiss */}
+                <button
+                  onClick={() => { setUserProfile(null); setSearchQuery(''); }}
+                  style={{
+                    flexShrink: 0, background: 'none', border: 'none',
+                    color: 'var(--clr-text-muted)', cursor: 'pointer', fontSize: 18,
+                    padding: '2px 6px', transition: 'var(--transition-fast)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--clr-text-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--clr-text-muted)'}
+                  title="Clear"
+                >×</button>
+              </div>
+            )}
+          </div>
+        )}
         {/* Filter tabs */}
         <div style={{
           display: 'flex', gap: 4,

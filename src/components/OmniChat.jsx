@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { useHelp } from '../context/HelpContext';
 
 // Create a mapping of pathnames to friendly names
 const PAGE_MAP = {
@@ -13,7 +14,7 @@ const PAGE_MAP = {
 };
 
 export default function OmniChat() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isAiOpen, closeAi } = useHelp();
   const [messages, setMessages] = useState([
     { role: 'ai', text: "Hello! I'm your D-CRYPT AI Tutor. I see you're exploring the vault. How can I help you with Web3, crypto, or transactions today?" }
   ]);
@@ -21,59 +22,6 @@ export default function OmniChat() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // ── Drag Logic for FAB ──
-  // Default position: bottom 30px, right 30px (which is x: innerWidth - 90, y: innerHeight - 90)
-  const [fabPos, setFabPos] = useState({ 
-    x: typeof window !== 'undefined' ? window.innerWidth - 90 : 0, 
-    y: typeof window !== 'undefined' ? window.innerHeight - 90 : 0 
-  });
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setFabPos(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 70),
-        y: Math.min(prev.y, window.innerHeight - 70)
-      }));
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handlePointerDown = (e) => {
-    isDragging.current = false;
-    const rect = e.currentTarget.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e) => {
-    if (e.buttons !== 1) return;
-    isDragging.current = true;
-    
-    const newX = e.clientX - dragOffset.current.x;
-    const newY = e.clientY - dragOffset.current.y;
-    
-    // Bounds
-    const x = Math.max(10, Math.min(newX, window.innerWidth - 70));
-    const y = Math.max(10, Math.min(newY, window.innerHeight - 70));
-    
-    setFabPos({ x, y });
-  };
-
-  const handlePointerUp = (e) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    // If we barely moved, treat it as a click
-    if (!isDragging.current) {
-      toggleDrawer();
-    }
-    isDragging.current = false;
-  };
-  
   const location = useLocation();
   const currentPage = PAGE_MAP[location.pathname] || 'Dashboard';
 
@@ -81,8 +29,6 @@ export default function OmniChat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const toggleDrawer = () => setIsOpen(!isOpen);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -114,41 +60,11 @@ export default function OmniChat() {
 
   return (
     <>
-      {/* ── Floating Action Button (Draggable) ── */}
-      <button
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        style={{
-          position: 'fixed',
-          left: fabPos.x,
-          top: fabPos.y,
-          zIndex: 9999,
-          width: 60, height: 60, borderRadius: '50%',
-          background: 'var(--clr-accent)',
-          border: '2px solid rgba(0, 229, 255, 0.4)',
-          boxShadow: '0 0 20px rgba(0, 229, 255, 0.5), inset 0 0 10px rgba(255,255,255,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#030812', cursor: isDragging.current ? 'grabbing' : 'grab',
-          transition: isDragging.current ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
-          transform: isOpen ? 'scale(0)' : 'scale(1)',
-          pointerEvents: isOpen ? 'none' : 'auto',
-          touchAction: 'none' // prevent scrolling while dragging on mobile
-        }}
-        onMouseEnter={(e) => { if(!isDragging.current) e.currentTarget.style.transform = 'scale(1.05)'; }}
-        onMouseLeave={(e) => { if(!isDragging.current) e.currentTarget.style.transform = isOpen ? 'scale(0)' : 'scale(1)'; }}
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          <path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 10h.01"/>
-        </svg>
-      </button>
-
       {/* ── Slide-out Drawer ── */}
       <div style={{
-        position: 'fixed', top: 0, right: isOpen ? 0 : '-400px',
+        position: 'fixed', top: 0, right: isAiOpen ? 0 : '-400px',
         width: '100%', maxWidth: '380px', height: '100vh',
-        background: 'rgba(5, 11, 20, 0.75)',
+        background: 'var(--clr-bg-surface)',
         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
         borderLeft: '1px solid rgba(0, 229, 255, 0.15)',
         boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
@@ -174,11 +90,11 @@ export default function OmniChat() {
               </svg>
             </div>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '0.5px' }}>D-CRYPT AI</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--clr-text-primary)', letterSpacing: '0.5px' }}>D-CRYPT AI</h3>
               <p style={{ fontSize: 11, color: 'var(--clr-accent)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Web3 Tutor</p>
             </div>
           </div>
-          <button onClick={toggleDrawer} style={{
+          <button onClick={closeAi} style={{
             background: 'transparent', border: 'none', color: 'var(--clr-text-muted)', cursor: 'pointer',
             padding: 4, display: 'flex'
           }}>
@@ -207,9 +123,9 @@ export default function OmniChat() {
               <div style={{
                 maxWidth: '85%', padding: '12px 16px',
                 borderRadius: m.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                background: m.role === 'user' ? 'var(--clr-accent)' : 'rgba(255,255,255,0.03)',
-                border: m.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                color: m.role === 'user' ? '#030812' : '#e2e8f0',
+                background: m.role === 'user' ? 'var(--clr-accent)' : 'var(--clr-bg-input)',
+                border: m.role === 'user' ? 'none' : '1px solid var(--clr-border)',
+                color: m.role === 'user' ? '#030812' : 'var(--clr-text-primary)',
                 fontSize: 14, lineHeight: 1.5,
                 boxShadow: m.role === 'user' ? '0 4px 14px rgba(0,229,255,0.2)' : 'none'
               }}>
@@ -226,7 +142,7 @@ export default function OmniChat() {
           {isLoading && (
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <div style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--clr-bg-input)', border: '1px solid var(--clr-border)',
                 borderRadius: '20px 20px 20px 4px', padding: '12px 16px', display: 'flex', gap: 4
               }}>
                 <span className="dot-bounce" style={{ animationDelay: '0s' }}>.</span>
@@ -239,7 +155,7 @@ export default function OmniChat() {
         </div>
 
         {/* Input Area */}
-        <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(3,8,18,0.5)' }}>
+        <div style={{ padding: '20px', borderTop: '1px solid var(--clr-border)', background: 'var(--clr-bg-surface)' }}>
           <div style={{ display: 'flex', gap: 10 }}>
             <input
               type="text"
@@ -248,8 +164,8 @@ export default function OmniChat() {
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Ask me anything about Web3..."
               style={{
-                flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 'var(--radius-md)', padding: '12px 16px', color: '#fff', outline: 'none',
+                flex: 1, background: 'var(--clr-bg-input)', border: '1px solid var(--clr-border)',
+                borderRadius: 'var(--radius-md)', padding: '12px 16px', color: 'var(--clr-text-primary)', outline: 'none',
                 fontSize: 14, transition: 'var(--transition-fast)'
               }}
               onFocus={e => e.target.style.borderColor = 'var(--clr-accent)'}
@@ -299,7 +215,7 @@ export default function OmniChat() {
         .prose code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
         .prose pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 0.5em 0; }
         .prose ul, .prose ol { margin-left: 20px; margin-bottom: 0.5em; }
-        .prose strong { color: #fff; }
+        .prose strong { color: var(--clr-text-primary); }
       `}</style>
     </>
   );
